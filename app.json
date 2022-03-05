@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "MobileDeckofCards",
+    "slug": "MobileDeckofCards",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
