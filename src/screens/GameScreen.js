@@ -1,35 +1,106 @@
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import io from 'socket.io-client';
 
 // ♠ ♥ ♦ ♣
 
-const Card = (num, suit) => {
+class Rules {
+  constructor () {
+      this.excludeDealer = false;
+      this.withoutHearts = false;
+      this.withoutDiamonds = false;
+      this.withoutClubs = false;
+      this.withoutSpades = false;
+      this.jokersEnabled = false;
+      this.autoAbsorbCards = false;
+      this.playFacedDown = false;
+  }
+}
+
+const socket = io.connect('https://mobiledeckofcards.azurewebsites.net', {
+  auth : {
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjQ1MjQ1ZTA5ZTM1ZmJmYjEyODg4NDYiLCJpYXQiOjE2NDg2OTg0NjJ9.uczJG3tl-wh6V646zX_i2CcTp1pWYNOT57ndedUzOJg',
+  },
+});
+
+const getSuit = (card) => {
+  if (card.value === '+' || card.value === '-')
+      return 'No Suit';
+  const code = card.value.charCodeAt(0);
+  if (code >= 110)
+      return 'Spades';
+  else if (code >= 97)
+      return 'Clubs';
+  else if (code >= 78)
+      return 'Diamonds';
+  else
+      return 'Hearts';
+}
+// Ace = 1, 2, 3, ..., 10, Jack = 11, Queen = 12, King = 13
+const getNumericVal = (card) => {
+  if (card.value === '+' || card.value === '-')
+      return 0;
+  const code = card.value.charCodeAt(0);
+  const fromZero = (code >= 97 ? code - 6 : code) - 65;
+  return (fromZero % 13) + 1;
+}
+
+const genCard = (card) => {
 
   var isRed = false;
+  var num = getNumericVal(card);
+  var suit = getSuit(card);
 
-  if (suit == 'S' || suit == 's')
+  if (num == 1)
+  {
+    num = 'A';
+  }
+  else if (num >= 11)
+  {  
+    if (num == 11)
+    {
+      num = 'J';
+    }
+    else if (num == 12)
+    {
+      num = 'Q';
+    }
+    else if (num == 13)
+    {
+      num = 'K';
+    }
+    else
+    {
+      num = 'Err';
+    }
+  }
+
+  if (suit == 'S' || suit == 's' || suit == 'Spades')
   {
     suit = '♠';
   }
-  else if (suit == 'H' || suit == 'h')
+  else if (suit == 'H' || suit == 'h' || suit == 'Hearts')
   {
     suit = '♥';
     isRed = true;
   }
-  else if (suit == 'D' || suit == 'd')
+  else if (suit == 'D' || suit == 'd' || suit == 'Diamonds')
   {
     suit = '♦';
     isRed = true;
   }
-  else if (suit == 'C' || suit == 'c')
+  else if (suit == 'C' || suit == 'c' || suit == 'Clubs')
   {
     suit = '♣';
   }
   else
   {
-    suit = '?';
+    suit = 'J';
+    num = 'Jkr';
   }
+  
+
   
   if (isRed) {
     return (
@@ -47,27 +118,79 @@ const Card = (num, suit) => {
   )
 };
 
-const Hand = () => {
-  return (
-    <View style={styles.hand}>
-    {Card('A', 'D')}
-    {Card('2', 'S')}
-    {Card('5', 'H')}
-    {Card('J', 'C')}
-    {Card('K', 'C')}
-    {Card('9', 'D')}
-    {Card('10', 'S')}
+function Hand (player, num) {
+  {
+    if (player.hand.contents.length == 0)
+    {
+      return (
+      <View>
+        <Text>player {num}</Text>
+        <View style={styles.hand}>
+          <Text>Hand Empty</Text>
+        </View>
+      </View>
+      )
+    }
+
+    const cards = player.hand.contents.map(genCard);
+
+    return (
+      <View>
+      <Text>player {num}:</Text>
+      <View style={styles.hand}>
+        { cards }
+      </View>
     </View>
-  )
+    )
+  }
 }
-  
-export default function App() {
-  var card1 = Card('9', 'h');
-  var card2 = Card('J', 'D');
+
+function genDeck (deck) {
+  {
+    if (deck.contents.length == 0)
+    {
+      return (
+      <View>
+        <Text>Deck:</Text>
+        <View style={styles.hand}>
+          <Text>Deck Empty</Text>
+        </View>
+      </View>
+      )
+    }
+
+    const cards = deck.contents.map(genCard);
+
+    return (
+      <View>
+      <Text>Deck:</Text>
+      <View style={styles.hand}>
+        { cards }
+      </View>
+    </View>
+    )
+  }
+}
+
+
+var initalState = null;
+
+socket.emit('create', new Rules(), (game) => {
+  initalState = game;
+  console.log(initalState);
+});
+
+
+
+export default function GameScreen() {
+  const [gameState, setGameState] = useState(initalState);
+
+  console.log('here')
   return (
     <View style={styles.container}>
       <Text>Hand</Text>
-      {Hand()}
+      {Hand(gameState.currentState.player1, 1)}
+      {genDeck(gameState.currentState.deck)}
       <StatusBar style="auto" />
     </View>
   );
@@ -75,8 +198,8 @@ export default function App() {
 
 
 const styles = StyleSheet.create({
-  container: {  
-    flex: 1,
+  container: {
+    padding: 5,
     backgroundColor: '#35654d',
     alignItems: 'center',
     justifyContent: 'center',
@@ -87,6 +210,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: "row",
     flexWrap: "wrap",
+    flex: 1,
+    flexShrink: 1,
   },
   card: {
     backgroundColor: '#FFFFFF',
