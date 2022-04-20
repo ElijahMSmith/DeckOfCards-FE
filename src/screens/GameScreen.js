@@ -7,7 +7,11 @@ import io from 'socket.io-client';
 
 // ♠ ♥ ♦ ♣
 
-
+const socket = io.connect('https://mobiledeckofcards.azurewebsites.net', {
+  auth : {
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjQ1MjQ1ZTA5ZTM1ZmJmYjEyODg4NDYiLCJpYXQiOjE2NDg2OTg0NjJ9.uczJG3tl-wh6V646zX_i2CcTp1pWYNOT57ndedUzOJg',
+  },
+});
 
 class Rules {
   constructor () {
@@ -129,13 +133,13 @@ function genTableCards (player, num) {
   // do not render if no cards on table
   if (player.table.contents.length == 0)
   {
-    return (<View style={{visibility: 'hidden'}}></View>);
+    return (<View key={num} style={{visibility: 'hidden'}}></View>);
   }
 
   const cards = player.table.contents.map(element => genCard(element, num));
   // render with same rules as the hand cards if any on table
   return (
-  <View>
+  <View key={num}>
     <Text style={styles.title}>Player {num} Table Cards:</Text>
     <View style={styles.hand}>
       { cards }
@@ -226,51 +230,15 @@ function genPile (pile, name) {
   }
 }
 
-function getNumPlayers(game) {
-  if ('_id' in game.currentState.player8) {
-    return 8;
-  }
-  if ('_id' in game.currentState.player7) {
-    return 7;
-  }
-  if ('_id' in game.currentState.player6) {
-    return 6;
-  }
-  if ('_id' in game.currentState.player5) {
-    return 5;
-  }
-  if ('_id' in game.currentState.player4) {
-    return 4;
-  }
-  if ('_id' in game.currentState.player3) {
-    return 3;
-  }
-  if ('_id' in game.currentState.player2) {
-    return 2;
-  }
-  if ('_id' in game.currentState.player1) {
-    return 1;
-  }
-  
-  return -1;
-}
-
-const socket = io.connect('https://mobiledeckofcards.azurewebsites.net', {
-  auth : {
-    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjQ1MjQ1ZTA5ZTM1ZmJmYjEyODg4NDYiLCJpYXQiOjE2NDg2OTg0NjJ9.uczJG3tl-wh6V646zX_i2CcTp1pWYNOT57ndedUzOJg',
-  },
-});
 
 var code = null;
 var playerNum = null;
 var initalState = null;
-var numPlayers = null;
 // new game
 socket.emit('create', new Rules(), (state) => {
     initalState = state;
     playerNum = state.playerNumber;
     code = state.code;
-    numPlayers = getNumPlayers(state);
     console.log(state);
 });
 
@@ -280,8 +248,26 @@ export default function GameScreen() {
   // so this jank setup forces the page to reload, I've spent too long looking for a pretty fix.
   const [, setReload] = useState();
   // use effect with empty dependencies only runs once, running this multiple times results polynomially increacing state updates
+  if (gameState == null)
+  {
+    return (
+      <View style={styles.container}>
+        <Text>Could Not Connect to server</Text>
+      </View>
+    )
+  }
+  
   useEffect(() => {
+    if (gameState == null)
+    {
+      return (
+        <View style={styles.container}>
+          <Text>Could Not Connect to server</Text>
+        </View>
+      )
+    }
     socket.on('update', (obj) => {
+      
       var tmp = gameState;
       tmp.currentState = Object.assign(gameState.currentState, obj);
       setGameState(tmp);
@@ -299,33 +285,38 @@ export default function GameScreen() {
 
   const genHands = (state, num) => {
     const hands = [];
-    switch (num)
-    {
-      case 8:
+      if ('_id' in state.currentState.player8) {
         hands.push(genHand(state.currentState.player8, 8));
         hands.push(genTableCards(state.currentState.player8, 8));
-      case 7:
+      }
+      if ('_id' in state.currentState.player7) {
         hands.push(genHand(state.currentState.player7, 7));
-        hands.push(genTableCards(state.currentState.player8, 7));
-      case 6:
+        hands.push(genTableCards(state.currentState.player7, 7));
+      }
+      if ('_id' in state.currentState.player6) {
         hands.push(genHand(state.currentState.player6, 6));
-        hands.push(genTableCards(state.currentState.player8, 6));
-      case 5:
+        hands.push(genTableCards(state.currentState.player6, 6));
+      }
+      if ('_id' in state.currentState.player5) {
         hands.push(genHand(state.currentState.player5, 5));
-        hands.push(genTableCards(state.currentState.player8, 5));
-      case 4:
+        hands.push(genTableCards(state.currentState.player5, 5));
+      }
+      if ('_id' in state.currentState.player4) {
         hands.push(genHand(state.currentState.player4, 4));
-        hands.push(genTableCards(state.currentState.player8, 4));
-      case 3:
+        hands.push(genTableCards(state.currentState.player4, 4));
+      }
+      if ('_id' in state.currentState.player3) {
         hands.push(genHand(state.currentState.player3, 3));
-        hands.push(genTableCards(state.currentState.player8, 3));
-      case 2:
+        hands.push(genTableCards(state.currentState.player3, 3));
+      }
+      if ('_id' in state.currentState.player2) {
         hands.push(genHand(state.currentState.player2, 2));
-        hands.push(genTableCards(state.currentState.player8, 2));
-      case 1:
+        hands.push(genTableCards(state.currentState.player2, 2));
+      }
+      if ('_id' in state.currentState.player1) {
         hands.push(genHand(state.currentState.player1, 1));
-        hands.push(genTableCards(state.currentState.player8, 1));
-    }
+        hands.push(genTableCards(state.currentState.player1, 1));
+      }
 
     return hands;
   }
@@ -342,7 +333,7 @@ export default function GameScreen() {
         />  
       {genPile(gameState.currentState.discard, "Discard")}
       {genPile(gameState.currentState.faceUp, "Face Up")}
-      {genHands(gameState, numPlayers)}
+      {genHands(gameState)}
 
       <StatusBar style="auto" />
     </View>
