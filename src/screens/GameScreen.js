@@ -1,9 +1,13 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { render } from 'react-dom';
 import { StyleSheet, Text, View } from 'react-native';
+import { Button } from 'react-native-web';
 import io from 'socket.io-client';
 
 // ♠ ♥ ♦ ♣
+
+
 
 class Rules {
   constructor () {
@@ -17,12 +21,6 @@ class Rules {
       this.playFacedDown = false;
   }
 }
-
-const socket = io.connect('https://mobiledeckofcards.azurewebsites.net', {
-  auth : {
-    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjQ1MjQ1ZTA5ZTM1ZmJmYjEyODg4NDYiLCJpYXQiOjE2NDg2OTg0NjJ9.uczJG3tl-wh6V646zX_i2CcTp1pWYNOT57ndedUzOJg',
-  },
-});
 
 const getSuit = (card) => {
   if (card.value === '+' || card.value === '-')
@@ -46,7 +44,15 @@ const getNumericVal = (card) => {
   return (fromZero % 13) + 1;
 }
 
-const genCard = (card) => {
+const genCard = (card, owner) => {
+
+  if (card.revealed == false && owner > 0 && owner != playerNum)
+  {
+    <View style={styles.card}>
+      <Text style={styles.cardNum}>?</Text>
+      <Text style={styles.cardSuit}>?</Text>
+    </View>
+  }
 
   var isRed = false;
   var num = getNumericVal(card);
@@ -118,25 +124,28 @@ const genCard = (card) => {
   )
 };
 
-function Hand (player, num) {
+function genHand (player, num) {
   {
     if (player.hand.contents.length == 0)
     {
       return (
-      <View>
-        <Text>player {num}</Text>
+      <View key={num}>
+        <Text style={styles.title}>Player {num}</Text>
         <View style={styles.hand}>
-          <Text>Hand Empty</Text>
+          <View style={styles.card}>
+            <Text style={styles.emptyPileTitle}>No Cards</Text>
+            <Text style={styles.cardSuit}></Text>
+          </View>
         </View>
       </View>
       )
     }
 
-    const cards = player.hand.contents.map(genCard);
+    const cards = player.hand.contents.map(element => genCard(element, num));
 
     return (
-      <View>
-      <Text>player {num}:</Text>
+    <View>
+      <Text style={styles.title}>Player {num}:</Text>
       <View style={styles.hand}>
         { cards }
       </View>
@@ -144,53 +153,169 @@ function Hand (player, num) {
     )
   }
 }
-
-function genDeck (deck) {
+// gen jsx for pile
+function genPile (pile, name) {
   {
-    if (deck.contents.length == 0)
+    var cardTitle = name;
+    // shorten certain names
+    if (name == "Discard")
+    {
+      cardTitle = "Disc."
+    }
+
+    if (pile.contents.length == 0)
     {
       return (
-      <View>
-        <Text>Deck:</Text>
-        <View style={styles.hand}>
-          <Text>Deck Empty</Text>
+        <View>
+          <Text style={styles.title}>{name}:</Text>
+          <View style={styles.hand}>
+            <View style={styles.card}>
+              <Text style={styles.emptyPileTitle}>No Cards</Text>
+              <Text style={styles.cardSuit}></Text>
+            </View>
+          </View>
         </View>
-      </View>
       )
     }
 
-    const cards = deck.contents.map(genCard);
+    // if facedown
+    if (pile.pileID == "F")
+    {
+      return (
+        <View>
+          <Text style={styles.title}>{name}:</Text>
+          <View style={styles.hand}>
+            <View style={styles.card}>
+              <Text style={styles.pileTitle}>{cardTitle}</Text>
+              <Text style={styles.cardSuit}>{pile.contents.length}</Text>
+            </View>
+          </View>
+        </View>
+      )
+    }
+
+    // render if face up and not empty
+    const cards = pile.contents.map(n => genCard(n, -1));
 
     return (
       <View>
-      <Text>Deck:</Text>
-      <View style={styles.hand}>
-        { cards }
+        <Text style={styles.title}>{name}:</Text>
+        <View style={styles.hand}>
+          { cards }
+        </View>
       </View>
-    </View>
     )
   }
 }
 
+function getNumPlayers(game) {
+  if ('_id' in game.currentState.player8) {
+    return 8;
+  }
+  if ('_id' in game.currentState.player7) {
+    return 7;
+  }
+  if ('_id' in game.currentState.player6) {
+    return 6;
+  }
+  if ('_id' in game.currentState.player5) {
+    return 5;
+  }
+  if ('_id' in game.currentState.player4) {
+    return 4;
+  }
+  if ('_id' in game.currentState.player3) {
+    return 3;
+  }
+  if ('_id' in game.currentState.player2) {
+    return 2;
+  }
+  if ('_id' in game.currentState.player1) {
+    return 1;
+  }
+  
+  return -1;
+}
 
-var initalState = null;
-
-socket.emit('create', new Rules(), (game) => {
-  initalState = game;
-  console.log(initalState);
+const socket = io.connect('https://mobiledeckofcards.azurewebsites.net', {
+  auth : {
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjQ1MjQ1ZTA5ZTM1ZmJmYjEyODg4NDYiLCJpYXQiOjE2NDg2OTg0NjJ9.uczJG3tl-wh6V646zX_i2CcTp1pWYNOT57ndedUzOJg',
+  },
 });
 
-
+var code = null;
+var playerNum = null;
+var initalState = null;
+var numPlayers = null;
+// new game
+socket.emit('create', new Rules(), (state) => {
+    initalState = state;
+    playerNum = state.playerNumber;
+    code = state.code;
+    numPlayers = getNumPlayers(state);
+    console.log(state);
+});
 
 export default function GameScreen() {
   const [gameState, setGameState] = useState(initalState);
+  // react is evil and does not detect changes in the properties of an object as a 'real' change
+  // so this jank setup forces the page to reload, I've spent too long looking for a pretty fix.
+  const [, setReload] = useState();
+  // use effect with empty dependencies only runs once, running this multiple times results polynomially increacing state updates
+  useEffect(() => {
+    socket.on('update', (obj) => {
+      var tmp = gameState;
+      tmp.currentState = Object.assign(gameState.currentState, obj);
+      setGameState(tmp);
+      console.log(gameState)
+      setReload({})
+    });
+  }, []);
 
-  console.log('here')
+  const draw = () => {
+    // draw 1 card
+    socket.emit('action', code, 'D1F ', (state) => {
+      console.log(state);
+    });
+  }
+
+  const genHands = (state, num) => {
+    const hands = [];
+    switch (num)
+    {
+      case 8:
+        hands.push(genHand(state.currentState.player8, 8));
+      case 7:
+        hands.push(genHand(state.currentState.player7, 7));
+      case 6:
+        hands.push(genHand(state.currentState.player6, 6));
+      case 5:
+        hands.push(genHand(state.currentState.player5, 5));
+      case 4:
+        hands.push(genHand(state.currentState.player4, 4));
+      case 3:
+        hands.push(genHand(state.currentState.player3, 3));
+      case 2:
+        hands.push(genHand(state.currentState.player2, 2));
+      case 1:
+        hands.push(genHand(state.currentState.player1, 1));
+    }
+
+    return hands;
+  }
+
   return (
     <View style={styles.container}>
-      <Text>Hand</Text>
-      {Hand(gameState.currentState.player1, 1)}
-      {genDeck(gameState.currentState.deck)}
+      {genPile(gameState.currentState.deck, "Deck")}
+      {genPile(gameState.currentState.discard, "Discard")}
+      {genHands(gameState, numPlayers)}
+      <Button
+          title="Draw Card"
+          color="red"
+          onPress={() => {
+            draw();
+          }}
+        />
       <StatusBar style="auto" />
     </View>
   );
@@ -199,10 +324,12 @@ export default function GameScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    flexWrap: 'nowrap',
     padding: 5,
     backgroundColor: '#35654d',
     alignItems: 'center',
     justifyContent: 'center',
+    height: '100vh',
   },
   hand: {  
     backgroundColor: '#35654d',
@@ -232,7 +359,34 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
     userSelect: 'none',
   },
-
+  pileTitle: {
+    textAlign: 'center',
+    fontSize: 30,
+    padding: 10,
+    paddingTop: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    paddingBottom: 0,
+    userSelect: 'none',
+  },
+  emptyPileTitle: {
+    textAlign: 'center',
+    textAlignVertical: 'bottom',
+    fontSize: 30,
+    padding: 10,
+    paddingTop: 0,
+    marginTop: 20,
+    marginBottom: 0,
+    paddingBottom: 0,
+    userSelect: 'none',
+  },
+  title: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontSize: 30,
+    padding: 5,
+    userSelect: 'none',
+  },
   cardSuit: {
     textAlign: 'center',
     textAlignVertical: 'top',
