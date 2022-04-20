@@ -124,34 +124,52 @@ const genCard = (card, owner) => {
   )
 };
 
-function genHand (player, num) {
+function genTableCards (player, num) {
+
+  // do not render if no cards on table
+  if (player.table.contents.length == 0)
   {
-    if (player.hand.contents.length == 0)
-    {
-      return (
-      <View key={num}>
-        <Text style={styles.title}>Player {num}</Text>
-        <View style={styles.hand}>
-          <View style={styles.card}>
-            <Text style={styles.emptyPileTitle}>No Cards</Text>
-            <Text style={styles.cardSuit}></Text>
-          </View>
-        </View>
-      </View>
-      )
-    }
+    return (<View style={{visibility: 'hidden'}}></View>);
+  }
 
-    const cards = player.hand.contents.map(element => genCard(element, num));
+  const cards = player.table.contents.map(element => genCard(element, num));
+  // render with same rules as the hand cards if any on table
+  return (
+  <View>
+    <Text style={styles.title}>Player {num} Table Cards:</Text>
+    <View style={styles.hand}>
+      { cards }
+    </View>
+  </View>
+  )
+}
 
+function genHand (player, num) {
+  if (player.hand.contents.length == 0)
+  {
     return (
-    <View>
-      <Text style={styles.title}>Player {num}:</Text>
+    <View key={num}>
+      <Text style={styles.title}>Player {num}</Text>
       <View style={styles.hand}>
-        { cards }
+        <View style={styles.card}>
+          <Text style={styles.emptyPileTitle}>No Cards</Text>
+          <Text style={styles.cardSuit}></Text>
+        </View>
       </View>
     </View>
     )
   }
+
+  const cards = player.hand.contents.map(element => genCard(element, num));
+
+  return (
+  <View>
+    <Text style={styles.title}>Player {num}:</Text>
+    <View style={styles.hand}>
+      { cards }
+    </View>
+  </View>
+  )
 }
 // gen jsx for pile
 function genPile (pile, name) {
@@ -274,7 +292,7 @@ export default function GameScreen() {
 
   const draw = () => {
     // draw 1 card
-    socket.emit('action', code, 'D1F ', (state) => {
+    socket.emit('action', code, 'D1FP', (state) => {
       console.log(state);
     });
   }
@@ -285,20 +303,28 @@ export default function GameScreen() {
     {
       case 8:
         hands.push(genHand(state.currentState.player8, 8));
+        hands.push(genTableCards(state.currentState.player8, 8));
       case 7:
         hands.push(genHand(state.currentState.player7, 7));
+        hands.push(genTableCards(state.currentState.player8, 7));
       case 6:
         hands.push(genHand(state.currentState.player6, 6));
+        hands.push(genTableCards(state.currentState.player8, 6));
       case 5:
         hands.push(genHand(state.currentState.player5, 5));
+        hands.push(genTableCards(state.currentState.player8, 5));
       case 4:
         hands.push(genHand(state.currentState.player4, 4));
+        hands.push(genTableCards(state.currentState.player8, 4));
       case 3:
         hands.push(genHand(state.currentState.player3, 3));
+        hands.push(genTableCards(state.currentState.player8, 3));
       case 2:
         hands.push(genHand(state.currentState.player2, 2));
+        hands.push(genTableCards(state.currentState.player8, 2));
       case 1:
         hands.push(genHand(state.currentState.player1, 1));
+        hands.push(genTableCards(state.currentState.player8, 1));
     }
 
     return hands;
@@ -307,15 +333,17 @@ export default function GameScreen() {
   return (
     <View style={styles.container}>
       {genPile(gameState.currentState.deck, "Deck")}
-      {genPile(gameState.currentState.discard, "Discard")}
-      {genHands(gameState, numPlayers)}
       <Button
           title="Draw Card"
           color="red"
           onPress={() => {
             draw();
           }}
-        />
+        />  
+      {genPile(gameState.currentState.discard, "Discard")}
+      {genPile(gameState.currentState.faceUp, "Face Up")}
+      {genHands(gameState, numPlayers)}
+
       <StatusBar style="auto" />
     </View>
   );
@@ -324,12 +352,10 @@ export default function GameScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flexWrap: 'nowrap',
-    padding: 5,
     backgroundColor: '#35654d',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '100vh',
+    minHeight: '100vh', 
   },
   hand: {  
     backgroundColor: '#35654d',
@@ -339,8 +365,9 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     flex: 1,
     flexShrink: 1,
+
   },
-  card: {
+  card: { 
     backgroundColor: '#FFFFFF',
     width: 100,
     height: 140,
