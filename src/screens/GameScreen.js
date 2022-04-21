@@ -807,7 +807,7 @@ const GameScreen = ({navigation}) => {
               absorbHand();
             }}
         />
-        <Button disabled={!(isHost() || isDealer)}
+        <Button disabled={!(isHost() || isDealer())}
             title="Set Dealer"
             color="black"
             onPress={() => {
