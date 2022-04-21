@@ -8,6 +8,7 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import {AuthContext} from '../context/AuthContext';
 import SplashScreen from '../screens/SplashScreen';
+import GameScreen from '../screens/GameScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,6 +36,11 @@ const Navigation = () => {
             <Stack.Screen
               name="Register"
               component={RegisterScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Game"
+              component={GameScreen}
               options={{headerShown: false}}
             />
           </>
