@@ -22,11 +22,11 @@ const HomeScreen = ({navigation}) => {
   const [state, setState] = useState({});
   const [joinCode, setJoinCode] = useState("");
   const [socket, setSocket] = useState({});
-  // connect to server TODO: set token to be user token instead of this static one.
+  // connect to server
   useEffect(() => {
     setSocket(io.connect('https://mobiledeckofcards.azurewebsites.net', {
       auth : {
-        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjQ1MjQ1ZTA5ZTM1ZmJmYjEyODg4NDYiLCJpYXQiOjE2NDg2OTg0NjJ9.uczJG3tl-wh6V646zX_i2CcTp1pWYNOT57ndedUzOJg',
+        token: userInfo.token,
       },
     }));
   }, []);
@@ -44,7 +44,6 @@ const HomeScreen = ({navigation}) => {
       console.log("socket is null")
       return;
     }
-    console.log('here')
     socket.emit('join', joinCode, (output) => {
       if ('error' in output)
       {
