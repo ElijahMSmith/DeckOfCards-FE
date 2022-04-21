@@ -44,11 +44,11 @@ const HomeScreen = ({navigation}) => {
       console.log("socket is null")
       return;
     }
-    socket.emit('join', joinCode, (output) => {
-      if ('error' in output)
+    socket.emit('join', joinCode, (state) => {
+      if ('error' in state)
       {
-        console.log(output.error);
-        return output.error;
+        console.log(state.error);
+        return state.error;
       }
       console.log("From joinGame in Home")
       console.log(state);
@@ -57,6 +57,9 @@ const HomeScreen = ({navigation}) => {
         console.log("Cannot join game")
         return "Cannot join game";
       }
+
+      state.code = joinCode;
+
       navigation.navigate('Game', {state, socket,});
     });
   }
