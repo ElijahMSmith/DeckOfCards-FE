@@ -1,7 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect } from 'react';
-import { render } from 'react-dom';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, TextInput } from 'react-native';
 import { Button } from 'react-native-web';
 import io from 'socket.io-client';
 
@@ -24,6 +23,71 @@ class Rules {
       this.autoAbsorbCards = false;
       this.playFacedDown = false;
   }
+}
+
+const cardStrToCardCode = (cardStr) => {
+  var suit = "";
+  var num = 0;
+  if (cardStr.length < 2 || cardStr.length > 3)
+  {
+    return "err";
+  }
+
+  if (cardStr.length == 2)
+  {
+    suit = cardStr.charAt(1);
+  }
+  else
+  {
+    suit = cardStr.charAt(2);
+  }
+
+  num = parseInt(cardStr);
+
+  if (cardStr.length == 2 && ((cardStr.charAt(0)).toUpperCase()) == 'J')
+  {
+    num = 11;
+  }
+  if (cardStr.length == 2 && ((cardStr.charAt(0)).toUpperCase()) == 'Q')
+  {
+    num = 12;
+  }
+  if (cardStr.length == 2 && ((cardStr.charAt(0)).toUpperCase()) == 'K')
+  {
+    num = 13;
+  }
+  if (cardStr.length == 2 && ((cardStr.charAt(0)).toUpperCase()) == 'A')
+  {
+    num = 1;
+  }
+
+  if (num > 13 || num < 1)
+  {
+    return "err";
+  }
+
+  if (suit.toUpperCase() == 'S')
+  {
+    num += 109;
+  }
+  else if (suit.toUpperCase() == 'H')
+  {
+    num += 64;
+  }
+  else if (suit.toUpperCase() == 'D')
+  {
+    num += 77;
+  }
+  else if (suit.toUpperCase() == 'C')
+  {
+    num += 96;
+  }
+  else
+  {
+    return "err";
+  }
+
+  return (String.fromCharCode(num))
 }
 
 const getSuit = (card) => {
@@ -52,10 +116,12 @@ const genCard = (card, owner) => {
 
   if (card.revealed == false && owner > 0 && owner != playerNum)
   {
-    <View style={styles.card}>
-      <Text style={styles.cardNum}>?</Text>
-      <Text style={styles.cardSuit}>?</Text>
-    </View>
+    return (
+      <View style={styles.card}>
+        <Text style={styles.cardNum}>?</Text>
+        <Text style={styles.cardSuit}>?</Text>
+      </View>
+    )
   }
 
   var isRed = false;
@@ -133,27 +199,27 @@ function genTableCards (player, num) {
   // do not render if no cards on table
   if (player.table.contents.length == 0)
   {
-    return (<View key={num} style={{visibility: 'hidden'}}></View>);
+    return (<View key={player + num} style={{visibility: 'hidden'}}></View>);
   }
 
   const cards = player.table.contents.map(element => genCard(element, num));
   // render with same rules as the hand cards if any on table
   return (
-  <View key={num}>
+  <View key={player + num}>
     <Text style={styles.title}>Player {num} Table Cards:</Text>
     <View style={styles.hand}>
       { cards }
     </View>
   </View>
-  )
+  );
 }
 
 function genHand (player, num) {
   if (player.hand.contents.length == 0)
   {
     return (
-    <View key={num}>
-      <Text style={styles.title}>Player {num}</Text>
+    <View key={player}>
+      <Text style={styles.title}>Player {num}:</Text>
       <View style={styles.hand}>
         <View style={styles.card}>
           <Text style={styles.emptyPileTitle}>No Cards</Text>
@@ -161,19 +227,20 @@ function genHand (player, num) {
         </View>
       </View>
     </View>
-    )
+    );
   }
-
+  else {
   const cards = player.hand.contents.map(element => genCard(element, num));
 
   return (
-  <View>
-    <Text style={styles.title}>Player {num}:</Text>
-    <View style={styles.hand}>
-      { cards }
+    <View key={player}>
+      <Text style={styles.title}>Player {num}:</Text>
+      <View style={styles.hand}>
+        { cards }
+      </View>
     </View>
-  </View>
-  )
+    )
+  }
 }
 // gen jsx for pile
 function genPile (pile, name) {
@@ -247,25 +314,18 @@ export default function GameScreen() {
   // react is evil and does not detect changes in the properties of an object as a 'real' change
   // so this jank setup forces the page to reload, I've spent too long looking for a pretty fix.
   const [, setReload] = useState();
-  // use effect with empty dependencies only runs once, running this multiple times results polynomially increacing state updates
+  const [source, setSource] = useState("");
+  const [target, setTarget] = useState("");
   if (gameState == null)
   {
     return (
       <View style={styles.container}>
-        <Text>Could Not Connect to server</Text>
+        <Text>Couldn't Connect to server</Text>
       </View>
     )
   }
   
   useEffect(() => {
-    if (gameState == null)
-    {
-      return (
-        <View style={styles.container}>
-          <Text>Could Not Connect to server</Text>
-        </View>
-      )
-    }
     socket.on('update', (obj) => {
       
       var tmp = gameState;
@@ -277,13 +337,173 @@ export default function GameScreen() {
   }, []);
 
   const draw = () => {
-    // draw 1 card
-    socket.emit('action', code, 'D1FP', (state) => {
+    
+    if (target == "" || source == "")
+    {
+      console.log("Target and/or source cannot be empty");
+      return null;
+    }
+    var actionCode = "";
+    if (target == playerNum)
+    {
+      actionCode = "D" + playerNum + source + " ";
+    }
+    else
+    {
+    // gen action code
+    actionCode = "D" + playerNum + source + target;
+    }
+
+    console.log("Draw: " + actionCode)    
+    
+    if (actionCode.length != 4) {
+      console.log("error in action code, invalid code:" + actionCode);
+      return "err";
+    }
+    // draw card
+    socket.emit('action', code, actionCode, (state) => {
       console.log(state);
     });
   }
 
-  const genHands = (state, num) => {
+  const play = () => {
+    // in this context source is a card
+    if (target == "" || source == "")
+    {
+      console.log("Target and/or source cannot be empty");
+      return null;
+    }
+
+    var cardCode = cardStrToCardCode(source);
+
+    if (cardCode == "err")
+    {
+      console.log("error in card code, bad input")
+      return "err";
+    }
+
+    // gen action code
+    var actionCode = "P" + playerNum + cardCode + target;
+
+    console.log("Play: " + actionCode)
+
+    if (actionCode.length != 4) {
+      console.log("error in action code, invalid code:" + actionCode);
+      return "err";
+    }
+
+    socket.emit('action', code, actionCode, (state) => {
+      console.log(state);
+    });
+  }
+
+  const flip = () => {
+    // in this context source is a card
+    if (source == "")
+    {
+      console.log("source cannot be empty");
+      return null;
+    }
+
+    var cardCode = cardStrToCardCode(source);
+
+    if (cardCode == "err")
+    {
+      console.log("error in card code, bad input")
+      return "err";
+    }
+
+    // gen action code
+    var actionCode = "F" + playerNum + cardCode + " ";
+
+    console.log("Flip: " + actionCode)
+
+    if (actionCode.length != 4) {
+      console.log("error in action code, invalid code:" + actionCode);
+      return "err";
+    }
+    
+    socket.emit('action', code, actionCode, (state) => {
+      console.log(state);
+    });
+  }
+
+  const shuffle = () => {
+    // both target and source are piles/hands
+    var pile1 = target;
+    var pile2 = source;
+    
+    if (target == "" || source.length > 1)
+    {
+      pile1 = " ";
+    }
+    if (source == "" || source.length > 1)
+    {
+      pile2 = " ";
+    }
+
+    // gen action code
+    var actionCode = "S" + pile1 + pile2 + " ";
+
+    console.log("shuffle: " + actionCode)
+
+    if (actionCode.length != 4) {
+      console.log("error in action code, invalid code:" + actionCode);
+      
+      socket.emit('action', code, "S   ", (state) => {
+        console.log(state);
+      });
+      return "";
+    }
+
+    socket.emit('action', code, actionCode, (state) => {
+      console.log(state);
+    });
+  }
+
+  const deal = () => {
+    // target is a player num, 0 for all
+    // source is # of cards to be given to each player
+    // deals 1 to all in case of improper input
+    var toPlayer = parseInt(target);
+    var numCards = parseInt(source);
+    
+    if (target == "" || toPlayer == NaN || toPlayer > 8 || toPlayer < 0)
+    {
+      toPlayer = 0;
+    }
+    if (source == "" || numCards == NaN || numCards < 0)
+    {
+      numCards = 1;
+    }
+
+    // gen action code
+    if (numCards >= 100) {
+      numCards = 99
+    }
+    var actionCode = "";
+    if (numCards < 10)
+    {
+      actionCode = "G" + toPlayer + "0" + numCards;
+    }
+    else
+    {
+      actionCode = "G" + toPlayer + numCards;
+    }
+
+    console.log("Deal: " + actionCode)
+
+    if (actionCode.length != 4) {
+      console.log("error in action code, invalid code:" + actionCode);
+      return "";
+    }
+
+    socket.emit('action', code, actionCode, (state) => {
+      console.log(state);
+    });
+  }
+
+  const genHands = (state) => {
     const hands = [];
       if ('_id' in state.currentState.player8) {
         hands.push(genHand(state.currentState.player8, 8));
@@ -323,14 +543,56 @@ export default function GameScreen() {
 
   return (
     <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        value={source}
+        placeholder="Source"
+        onChangeText={text => setSource(text)}
+      />
+      <TextInput
+        style={styles.input}
+        value={target}
+        placeholder="Target"
+        onChangeText={text => setTarget(text)}
+      />
+      <View style={styles.buttonContainer}>
+        <Button
+            title="Draw Card"
+            color="red"
+            onPress={() => {
+              draw();
+            }}
+        />
+        <Button
+            title="Play Card"
+            color="blue"
+            onPress={() => {
+              play();
+            }}
+        />
+        <Button
+            title="Flip Card"
+            color="purple"
+            onPress={() => {
+              flip();
+            }}
+        />
+        <Button
+            title="Shuffle/Shuffle in"
+            color="gray"
+            onPress={() => {
+              shuffle();
+            }}
+        />
+        <Button
+            title="Deal Cards"
+            color="green"
+            onPress={() => {
+              deal();
+            }}
+        />
+      </View>
       {genPile(gameState.currentState.deck, "Deck")}
-      <Button
-          title="Draw Card"
-          color="red"
-          onPress={() => {
-            draw();
-          }}
-        />  
       {genPile(gameState.currentState.discard, "Discard")}
       {genPile(gameState.currentState.faceUp, "Face Up")}
       {genHands(gameState)}
@@ -375,7 +637,6 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginBottom: 0,
     paddingBottom: 0,
-    userSelect: 'none',
   },
   pileTitle: {
     textAlign: 'center',
@@ -385,7 +646,6 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginBottom: 0,
     paddingBottom: 0,
-    userSelect: 'none',
   },
   emptyPileTitle: {
     textAlign: 'center',
@@ -396,14 +656,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 0,
     paddingBottom: 0,
-    userSelect: 'none',
   },
   title: {
     color: '#FFFFFF',
     textAlign: 'center',
     fontSize: 30,
     padding: 5,
-    userSelect: 'none',
   },
   cardSuit: {
     textAlign: 'center',
@@ -413,7 +671,6 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     marginTop: 0,
     justifyContent: 'center',
-    userSelect: 'none',
   },
 
   redBorder: {
@@ -423,5 +680,14 @@ const styles = StyleSheet.create({
 
   redText: {
     color: '#dd0000',
+  },
+
+  input: {
+    margin: 5,
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 5,
+    paddingHorizontal: 14,
+    backgroundColor: 'white',
   },
 });
