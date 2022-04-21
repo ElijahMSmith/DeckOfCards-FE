@@ -3,15 +3,21 @@ import {Button, StyleSheet, Text, View, TouchableOpacity, Pressable} from 'react
 import Spinner from 'react-native-loading-spinner-overlay';
 import {AuthContext} from '../context/AuthContext';
 
-const HomeScreen = () => {
-  const {userInfo, isLoading, logout} = useContext(AuthContext);
 
+
+const HomeScreen = ({navigation}) => {
+  const {userInfo, isLoading, logout} = useContext(AuthContext);
+  
+  const createGame = () => {
+    navigation.navigate('Game');
+  }
+  
   return (
     <View style={styles.container}>
 
       <Text style={styles.welcome}>Welcome, {userInfo.user.username}</Text>
 
-      <Pressable style={styles.button}>
+      <Pressable style={styles.button} onPress={createGame}>
         <Text style= {styles.buttonText}>Create Game</Text>
       </Pressable>
 
@@ -26,7 +32,6 @@ const HomeScreen = () => {
       <Pressable style={styles.logoutbutton} onPress={logout}>
       <Text style= {styles.logoutbuttonText}>Log Out</Text>
       </Pressable>
-
     </View>
   );
 };

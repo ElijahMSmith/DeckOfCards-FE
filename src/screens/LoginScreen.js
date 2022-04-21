@@ -53,12 +53,6 @@ const LoginScreen = ({navigation}) => {
             <Text style={styles.link}>Register</Text>
           </TouchableOpacity>
         </View>
-        <View style={{flexDirection: 'row', marginTop: 20, justifyContent: 'center'}}>
-          <Text>Game Shortcut </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Game')}>
-            <Text style={styles.link}>Click Here</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );

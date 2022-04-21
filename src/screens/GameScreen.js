@@ -323,6 +323,22 @@ export default function GameScreen({navigation}) {
     return (
       <View style={styles.container}>
         <Text>Couldn't Connect to server</Text>
+        <View>
+          <Button
+              title="Reload"
+              color="red"
+              onPress={() => {
+                setReload({});
+              }}
+          />
+          <Button
+              title="Return to Home"
+              color="blue"
+              onPress={() => {
+                navigation.navigate('Home');
+              }}
+          />
+        </View>
       </View>
     )
   }
@@ -547,7 +563,7 @@ export default function GameScreen({navigation}) {
       console.log(state);
     });
 
-    navigation.navigate('Login');
+    navigation.navigate('Home');
   }
 
   const kickPlayer = () => {
@@ -654,6 +670,8 @@ export default function GameScreen({navigation}) {
     socket.emit('action', code, actionCode, (state) => {
       console.log(state);
     });
+
+    navigation.navigate('Home')
   }
 
   const genHands = (state) => {
