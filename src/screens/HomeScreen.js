@@ -35,14 +35,14 @@ const HomeScreen = ({navigation}) => {
     socket.emit('create', new Rules(), (state) => {
       console.log("From createGame in Home")
       console.log(state);
-      navigation.navigate('Game', {state, socket,});
+      navigation.navigate('Game', {state, socket});
     });
   }
   const joinGame = () => {
     if (socket == null)
     {
       console.log("socket is null")
-      return;
+      return "";
     }
     socket.emit('join', joinCode, (state) => {
       if ('error' in state)
@@ -60,7 +60,7 @@ const HomeScreen = ({navigation}) => {
 
       state.code = joinCode;
 
-      navigation.navigate('Game', {state, socket,});
+      navigation.navigate('Game', {state, socket});
     });
   }
   
@@ -87,7 +87,7 @@ const HomeScreen = ({navigation}) => {
       </Pressable>
 
       <Pressable style={styles.logoutbutton} onPress={logout}>
-      <Text style= {styles.logoutbuttonText}>Log Out</Text>
+        <Text style= {styles.logoutbuttonText}>Log Out</Text>
       </Pressable>
     </View>
   );
