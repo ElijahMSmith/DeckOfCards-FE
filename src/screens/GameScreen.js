@@ -309,13 +309,15 @@ socket.emit('create', new Rules(), (state) => {
     console.log(state);
 });
 
-export default function GameScreen() {
+export default function GameScreen({navigation}) {
   const [gameState, setGameState] = useState(initalState);
   // react is evil and does not detect changes in the properties of an object as a 'real' change
   // so this jank setup forces the page to reload, I've spent too long looking for a pretty fix.
   const [, setReload] = useState();
   const [source, setSource] = useState("");
   const [target, setTarget] = useState("");
+  const [lobbyTarget, setLobbyTarget] = useState("");
+
   if (gameState == null)
   {
     return (
@@ -336,6 +338,30 @@ export default function GameScreen() {
     });
   }, []);
 
+  const wordToCode = (str) => {
+    if (str.toUpperCase() == "DECK")
+    {
+      return "F";
+    }
+    if (str.toUpperCase() == "DISCARD" || str.toUpperCase() == "DIS" )
+    {
+      return "D";
+    }
+    if (str.toUpperCase() == "TABLE" || str.toUpperCase() == "TAB")
+    {
+      return "T";
+    }
+    if (str.toUpperCase() == "HAND")
+    {
+      return "H";
+    }
+    if (str.toUpperCase() == "FACE UP" || str.toUpperCase() == "UP" || str.toUpperCase() == "FACE")
+    {
+      return "P";
+    }
+    return (str);
+  }
+
   const draw = () => {
     
     if (target == "" || source == "")
@@ -343,18 +369,20 @@ export default function GameScreen() {
       console.log("Target and/or source cannot be empty");
       return null;
     }
+
+
     var actionCode = "";
     if (target == playerNum)
     {
-      actionCode = "D" + playerNum + source + " ";
+      actionCode = "D" + playerNum + wordToCode(source) + " ";
     }
     else
     {
     // gen action code
-    actionCode = "D" + playerNum + source + target;
+    actionCode = "D" + playerNum + wordToCode(source) + wordToCode(target);
     }
 
-    console.log("Draw: " + actionCode)    
+    console.log("Draw: " + actionCode)
     
     if (actionCode.length != 4) {
       console.log("error in action code, invalid code:" + actionCode);
@@ -383,7 +411,7 @@ export default function GameScreen() {
     }
 
     // gen action code
-    var actionCode = "P" + playerNum + cardCode + target;
+    var actionCode = "P" + playerNum + cardCode + wordToCode(target);
 
     console.log("Play: " + actionCode)
 
@@ -430,14 +458,14 @@ export default function GameScreen() {
 
   const shuffle = () => {
     // both target and source are piles/hands
-    var pile1 = target;
-    var pile2 = source;
+    var pile1 = wordToCode(source);
+    var pile2 = wordToCode(target);
     
-    if (target == "" || source.length > 1)
+    if (source == "")
     {
       pile1 = " ";
     }
-    if (source == "" || source.length > 1)
+    if (target == "")
     {
       pile2 = " ";
     }
@@ -503,6 +531,131 @@ export default function GameScreen() {
     });
   }
 
+  const leaveGame = () => {
+
+    // gen action code
+    var actionCode = "L" + playerNum + " " + " ";
+
+    console.log("Left: " + actionCode)
+
+    if (actionCode.length != 4) {
+      console.log("error in action code, invalid code:" + actionCode);
+      return "err";
+    }
+    
+    socket.emit('action', code, actionCode, (state) => {
+      console.log(state);
+    });
+
+    navigation.navigate('Login');
+  }
+
+  const kickPlayer = () => {
+    if (lobbyTarget == "")
+    {
+      console.log("player cannot be empty");
+      return null;
+    }
+
+    if (lobbyTarget > 8 || lobbyTarget < 1)
+    {
+      console.log("Invalid player, must be from 1-8")
+      return null;
+    }
+
+    // gen action code
+    var actionCode = "L" + lobbyTarget + "K" + " ";
+
+    console.log("Kick: " + actionCode)
+
+    if (actionCode.length != 4) {
+      console.log("error in action code, invalid code:" + actionCode);
+      return "err";
+    }
+    
+    socket.emit('action', code, actionCode, (state) => {
+      console.log(state);
+    });
+  }
+
+  const absorbHand = () => {
+    if (lobbyTarget == "")
+    {
+      console.log("player cannot be empty");
+      return null;
+    }
+
+    if (lobbyTarget > 8 || lobbyTarget < 1)
+    {
+      console.log("Invalid player, must be from 1-8")
+      return null;
+    }
+
+    // gen action code
+    var actionCode = "A" + lobbyTarget + " " + " ";
+
+    console.log("absorb: " + actionCode)
+
+    if (actionCode.length != 4) {
+      console.log("error in action code, invalid code:" + actionCode);
+      return "err";
+    }
+    
+    socket.emit('action', code, actionCode, (state) => {
+      console.log(state);
+    });
+  }
+
+  const assignDealer = () => {
+    if (lobbyTarget == "")
+    {
+      console.log("player cannot be empty");
+      return null;
+    }
+
+    if (lobbyTarget > 8 || lobbyTarget < 1)
+    {
+      console.log("Invalid player, must be from 1-8")
+      return null;
+    }
+
+    // gen action code
+    var actionCode = "N" + lobbyTarget + " " + " ";
+
+    console.log("assign dealer: " + actionCode)
+
+    if (actionCode.length != 4) {
+      console.log("error in action code, invalid code:" + actionCode);
+      return "err";
+    }
+    
+    socket.emit('action', code, actionCode, (state) => {
+      console.log(state);
+    });
+  }
+
+  const resetGame = () => {
+    // gen action code
+    var actionCode = "R   ";
+
+    console.log("reset game: " + actionCode)
+    
+    socket.emit('action', code, actionCode, (state) => {
+      console.log(state);
+    });
+  }
+
+  const endGame = () => {
+    // gen action code
+    var actionCode = "T   ";
+
+    console.log("end game: " + actionCode)
+    
+    socket.emit('action', code, actionCode, (state) => {
+      console.log(state);
+    });
+  }
+
   const genHands = (state) => {
     const hands = [];
       if ('_id' in state.currentState.player8) {
@@ -555,7 +708,7 @@ export default function GameScreen() {
         placeholder="Target"
         onChangeText={text => setTarget(text)}
       />
-      <View style={styles.buttonContainer}>
+      <View>
         <Button
             title="Draw Card"
             color="red"
@@ -596,6 +749,56 @@ export default function GameScreen() {
       {genPile(gameState.currentState.discard, "Discard")}
       {genPile(gameState.currentState.faceUp, "Face Up")}
       {genHands(gameState)}
+      <View>
+        <TextInput
+          style={styles.input}
+          value={lobbyTarget}
+          placeholder="user #"
+          onChangeText={text => setLobbyTarget(text)}
+        />
+        <Button
+            title="Leave Game"
+            color="red"
+            onPress={() => {
+              leaveGame();
+            }}
+        />
+        <Button
+            title="Kick Player"
+            color="blue"
+            onPress={() => {
+              kickPlayer();
+            }}
+        />
+        <Button
+            title="Absorb Hand"
+            color="purple"
+            onPress={() => {
+              absorbHand();
+            }}
+        />
+        <Button
+            title="Set Dealer"
+            color="black"
+            onPress={() => {
+              assignDealer();
+            }}
+        />
+        <Button
+            title="Reset Game"
+            color="grey"
+            onPress={() => {
+              resetGame();
+            }}
+        />
+        <Button
+            title="End Game"
+            color="green"
+            onPress={() => {
+              endGame();
+            }}
+        />
+      </View>
 
       <StatusBar style="auto" />
     </View>
@@ -605,6 +808,12 @@ export default function GameScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: '#35654d',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh', 
+  },
+  buttonContainer: {
     backgroundColor: '#35654d',
     alignItems: 'center',
     justifyContent: 'center',
