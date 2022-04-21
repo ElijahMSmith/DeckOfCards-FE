@@ -25,7 +25,18 @@ const Navigation = () => {
             options={{headerShown: false}}
           />
         ) : userInfo.token ? (
-          <Stack.Screen name="Home" component={HomeScreen} options={{headerShown: false}}/>
+          <>
+            <Stack.Screen
+            name="Home" 
+            component={HomeScreen} 
+            options={{headerShown: false}}
+            />
+            <Stack.Screen
+            name="Game"
+            component={GameScreen}
+            options={{headerShown: false}}
+            />
+          </>
         ) : (
           <>
             <Stack.Screen
@@ -36,11 +47,6 @@ const Navigation = () => {
             <Stack.Screen
               name="Register"
               component={RegisterScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Game"
-              component={GameScreen}
               options={{headerShown: false}}
             />
           </>

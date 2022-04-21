@@ -3,15 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput } from 'react-native';
 import { Button } from 'react-native-web';
 import io from 'socket.io-client';
+import { useRoute } from '@react-navigation/native';
+
+var playerNum = -1;
 
 // ♠ ♥ ♦ ♣
-
-const socket = io.connect('https://mobiledeckofcards.azurewebsites.net', {
-  auth : {
-    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjQ1MjQ1ZTA5ZTM1ZmJmYjEyODg4NDYiLCJpYXQiOjE2NDg2OTg0NjJ9.uczJG3tl-wh6V646zX_i2CcTp1pWYNOT57ndedUzOJg',
-  },
-});
-
 class Rules {
   constructor () {
       this.excludeDealer = false;
@@ -117,7 +113,7 @@ const genCard = (card, owner) => {
   if (card.revealed == false && owner > 0 && owner != playerNum)
   {
     return (
-      <View style={styles.card}>
+      <View key={card.value} style={styles.card}>
         <Text style={styles.cardNum}>?</Text>
         <Text style={styles.cardSuit}>?</Text>
       </View>
@@ -180,16 +176,16 @@ const genCard = (card, owner) => {
   
   if (isRed) {
     return (
-      <View style={[styles.card, styles.redBorder]}>
-      <Text style={[styles.cardNum, styles.redText]}>{num}</Text>
-      <Text style={[styles.cardSuit, styles.redText]}>{suit}</Text>
+      <View key={card.value} style={[styles.card, styles.redBorder]}>
+        <Text style={[styles.cardNum, styles.redText]}>{num}</Text>
+        <Text style={[styles.cardSuit, styles.redText]}>{suit}</Text>
       </View>
     )
   }
   return (
-    <View style={styles.card}>
-    <Text style={styles.cardNum}>{num}</Text>
-    <Text style={styles.cardSuit}>{suit}</Text>
+    <View key={card.value} style={styles.card}>
+      <Text style={styles.cardNum}>{num}</Text>
+      <Text style={styles.cardSuit}>{suit}</Text>
     </View>
   )
 };
@@ -205,7 +201,7 @@ function genTableCards (player, num) {
   const cards = player.table.contents.map(element => genCard(element, num));
   // render with same rules as the hand cards if any on table
   return (
-  <View key={player + num}>
+  <View key={'table' + player}>
     <Text style={styles.title}>Player {num} Table Cards:</Text>
     <View style={styles.hand}>
       { cards }
@@ -297,35 +293,20 @@ function genPile (pile, name) {
   }
 }
 
-
-var code = null;
-var playerNum = null;
-var initalState = null;
-// new game
-socket.emit('create', new Rules(), (state) => {
-    initalState = state;
-    playerNum = state.playerNumber;
-    code = state.code;
-    console.log(state);
-});
-
-export default function GameScreen({navigation}) {
-  const [gameState, setGameState] = useState(initalState);
+const GameScreen = ({navigation}) => {
+  const route = useRoute();
+  const [gameState, setGameState] = useState(route.params.state);
   // react is evil and does not detect changes in the properties of an object as a 'real' change
   // so this jank setup forces the page to reload, I've spent too long looking for a pretty fix.
   const [, setReload] = useState();
   const [source, setSource] = useState("");
   const [target, setTarget] = useState("");
   const [lobbyTarget, setLobbyTarget] = useState("");
-
-  if (gameState == null)
-  {
-    return (
-      <View style={styles.container}>
-        <Text>Couldn't Connect to server</Text>
-      </View>
-    )
-  }
+  
+  var gameCode = route.params.state.code;
+  playerNum = route.params.state.playerNumber;
+  const socket = route.params.socket;
+  console.log(playerNum)
   
   useEffect(() => {
     socket.on('update', (obj) => {
@@ -337,6 +318,32 @@ export default function GameScreen({navigation}) {
       setReload({})
     });
   }, []);
+
+  if (gameState == null)
+  {
+    return (
+      <View style={styles.container}>
+        <Text>Couldn't Connect to server</Text>
+        <View>
+          <Button
+              title="Reload"
+              color="red"
+              onPress={() => {
+                setReload({});
+              }}
+          />
+          <Button
+              title="Return to Home"
+              color="blue"
+              onPress={() => {
+                navigation.navigate('Home');
+              }}
+          />
+        </View>
+      </View>
+    )
+  }
+  
 
   const wordToCode = (str) => {
     if (str.toUpperCase() == "DECK")
@@ -363,23 +370,28 @@ export default function GameScreen({navigation}) {
   }
 
   const draw = () => {
-    
-    if (target == "" || source == "")
+    var to = target;
+    var from = source;
+    if (target == "")
     {
-      console.log("Target and/or source cannot be empty");
-      return null;
+      to = 'H';
+    }
+    if (from == "")
+    {
+      // F: face down deck
+      from = 'F'
     }
 
 
     var actionCode = "";
-    if (target == playerNum)
+    if (to == playerNum)
     {
-      actionCode = "D" + playerNum + wordToCode(source) + " ";
+      actionCode = "D" + playerNum + wordToCode(from) + " ";
     }
     else
     {
     // gen action code
-    actionCode = "D" + playerNum + wordToCode(source) + wordToCode(target);
+    actionCode = "D" + playerNum + wordToCode(from) + wordToCode(to);
     }
 
     console.log("Draw: " + actionCode)
@@ -389,7 +401,7 @@ export default function GameScreen({navigation}) {
       return "err";
     }
     // draw card
-    socket.emit('action', code, actionCode, (state) => {
+    socket.emit('action', gameCode, actionCode, (state) => {
       console.log(state);
     });
   }
@@ -420,7 +432,7 @@ export default function GameScreen({navigation}) {
       return "err";
     }
 
-    socket.emit('action', code, actionCode, (state) => {
+    socket.emit('action', gameCode, actionCode, (state) => {
       console.log(state);
     });
   }
@@ -451,7 +463,7 @@ export default function GameScreen({navigation}) {
       return "err";
     }
     
-    socket.emit('action', code, actionCode, (state) => {
+    socket.emit('action', gameCode, actionCode, (state) => {
       console.log(state);
     });
   }
@@ -478,13 +490,13 @@ export default function GameScreen({navigation}) {
     if (actionCode.length != 4) {
       console.log("error in action code, invalid code:" + actionCode);
       
-      socket.emit('action', code, "S   ", (state) => {
+      socket.emit('action', gameCode, "S   ", (state) => {
         console.log(state);
       });
       return "";
     }
 
-    socket.emit('action', code, actionCode, (state) => {
+    socket.emit('action', gameCode, actionCode, (state) => {
       console.log(state);
     });
   }
@@ -526,7 +538,7 @@ export default function GameScreen({navigation}) {
       return "";
     }
 
-    socket.emit('action', code, actionCode, (state) => {
+    socket.emit('action', gameCode, actionCode, (state) => {
       console.log(state);
     });
   }
@@ -543,11 +555,11 @@ export default function GameScreen({navigation}) {
       return "err";
     }
     
-    socket.emit('action', code, actionCode, (state) => {
+    socket.emit('action', gameCode, actionCode, (state) => {
       console.log(state);
     });
 
-    navigation.navigate('Login');
+    navigation.navigate('Home');
   }
 
   const kickPlayer = () => {
@@ -573,7 +585,7 @@ export default function GameScreen({navigation}) {
       return "err";
     }
     
-    socket.emit('action', code, actionCode, (state) => {
+    socket.emit('action', gameCode, actionCode, (state) => {
       console.log(state);
     });
   }
@@ -601,7 +613,7 @@ export default function GameScreen({navigation}) {
       return "err";
     }
     
-    socket.emit('action', code, actionCode, (state) => {
+    socket.emit('action', gameCode, actionCode, (state) => {
       console.log(state);
     });
   }
@@ -629,7 +641,7 @@ export default function GameScreen({navigation}) {
       return "err";
     }
     
-    socket.emit('action', code, actionCode, (state) => {
+    socket.emit('action', gameCode, actionCode, (state) => {
       console.log(state);
     });
   }
@@ -640,7 +652,7 @@ export default function GameScreen({navigation}) {
 
     console.log("reset game: " + actionCode)
     
-    socket.emit('action', code, actionCode, (state) => {
+    socket.emit('action', gameCode, actionCode, (state) => {
       console.log(state);
     });
   }
@@ -651,9 +663,11 @@ export default function GameScreen({navigation}) {
 
     console.log("end game: " + actionCode)
     
-    socket.emit('action', code, actionCode, (state) => {
+    socket.emit('action', gameCode, actionCode, (state) => {
       console.log(state);
     });
+
+    navigation.navigate('Home')
   }
 
   const genHands = (state) => {
@@ -696,6 +710,7 @@ export default function GameScreen({navigation}) {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Game Code: {route.params.state.code}</Text>
       <TextInput
         style={styles.input}
         value={source}
@@ -805,6 +820,7 @@ export default function GameScreen({navigation}) {
   );
 }
 
+export default GameScreen;
 
 const styles = StyleSheet.create({
   container: {
