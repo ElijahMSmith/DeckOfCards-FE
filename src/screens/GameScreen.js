@@ -306,7 +306,6 @@ const GameScreen = ({navigation}) => {
   var gameCode = route.params.state.code;
   playerNum = route.params.state.playerNumber;
   const socket = route.params.socket;
-  console.log(playerNum)
   
   useEffect(() => {
     socket.on('update', (obj) => {
@@ -562,6 +561,22 @@ const GameScreen = ({navigation}) => {
     navigation.navigate('Home');
   }
 
+  const isHost = () => {
+    if (playerNum == 1)
+    {
+      return true;
+    }
+    return false;
+  }
+
+  const isDealer = () => {
+    if (playerNum == gameState.currentState.currentDealer)
+    {
+      return true;
+    }
+    return false;
+  }
+
   const kickPlayer = () => {
     if (lobbyTarget == "")
     {
@@ -752,7 +767,7 @@ const GameScreen = ({navigation}) => {
               shuffle();
             }}
         />
-        <Button
+        <Button disabled={!isDealer()}
             title="Deal Cards"
             color="green"
             onPress={() => {
@@ -778,35 +793,35 @@ const GameScreen = ({navigation}) => {
               leaveGame();
             }}
         />
-        <Button
+        <Button disabled={!isHost()}
             title="Kick Player"
             color="blue"
             onPress={() => {
               kickPlayer();
             }}
         />
-        <Button
+        <Button disabled={!isHost()}
             title="Absorb Hand"
             color="purple"
             onPress={() => {
               absorbHand();
             }}
         />
-        <Button
+        <Button disabled={!(isHost() || isDealer)}
             title="Set Dealer"
             color="black"
             onPress={() => {
               assignDealer();
             }}
         />
-        <Button
+        <Button disabled={!isHost()}
             title="Reset Game"
             color="grey"
             onPress={() => {
               resetGame();
             }}
         />
-        <Button
+        <Button disabled={!isHost()}
             title="End Game"
             color="green"
             onPress={() => {
