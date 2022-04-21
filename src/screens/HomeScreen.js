@@ -1,15 +1,65 @@
-import React, {useContext} from 'react';
-import {Button, StyleSheet, Text, View, TouchableOpacity, Pressable} from 'react-native';
+import React, {useContext, useState, useEffect} from 'react';
+import {Button, StyleSheet, Text, View, TouchableOpacity, Pressable, TextInput} from 'react-native';
 import Spinner from 'react-native-loading-spinner-overlay';
 import {AuthContext} from '../context/AuthContext';
+import io from 'socket.io-client';
 
-
+class Rules {
+  constructor () {
+      this.excludeDealer = false;
+      this.withoutHearts = false;
+      this.withoutDiamonds = false;
+      this.withoutClubs = false;
+      this.withoutSpades = false;
+      this.jokersEnabled = false;
+      this.autoAbsorbCards = false;
+      this.playFacedDown = false;
+  }
+}
 
 const HomeScreen = ({navigation}) => {
   const {userInfo, isLoading, logout} = useContext(AuthContext);
-  
+  const [state, setState] = useState({});
+  const [joinCode, setJoinCode] = useState("");
+  const [socket, setSocket] = useState({});
+  // connect to server TODO: set token to be user token instead of this static one.
+  useEffect(() => {
+    setSocket(io.connect('https://mobiledeckofcards.azurewebsites.net', {
+      auth : {
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjQ1MjQ1ZTA5ZTM1ZmJmYjEyODg4NDYiLCJpYXQiOjE2NDg2OTg0NjJ9.uczJG3tl-wh6V646zX_i2CcTp1pWYNOT57ndedUzOJg',
+      },
+    }));
+  }, []);
+
   const createGame = () => {
-    navigation.navigate('Game');
+    socket.emit('create', new Rules(), (state) => {
+      console.log("From createGame in Home")
+      console.log(state);
+      navigation.navigate('Game', {state, socket,});
+    });
+  }
+  const joinGame = () => {
+    if (socket == null)
+    {
+      console.log("socket is null")
+      return;
+    }
+    console.log('here')
+    socket.emit('join', joinCode, (output) => {
+      if ('error' in output)
+      {
+        console.log(output.error);
+        return output.error;
+      }
+      console.log("From joinGame in Home")
+      console.log(state);
+      if (!('currentState' in state))
+      {
+        console.log("Cannot join game")
+        return "Cannot join game";
+      }
+      navigation.navigate('Game', {state, socket,});
+    });
   }
   
   return (
@@ -21,10 +71,15 @@ const HomeScreen = ({navigation}) => {
         <Text style= {styles.buttonText}>Create Game</Text>
       </Pressable>
 
-      <Pressable style={styles.button}>
+      <Pressable style={styles.button} onPress={joinGame}>
         <Text style= {styles.buttonText}>Join Game</Text>
       </Pressable>
-
+      <TextInput
+        style={styles.input}
+        value={joinCode}
+        placeholder="Game Code"
+        onChangeText={text => setJoinCode(text)}
+      />
       <Pressable style={styles.button}>
         <Text style= {styles.buttonText}>View Replays</Text>
       </Pressable>
@@ -77,7 +132,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16
   },
-
+  input: {
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 5,
+    paddingHorizontal: 14,
+    backgroundColor: 'white',
+  },
 });
 
 export default HomeScreen;
