@@ -9,6 +9,8 @@ export const AuthProvider = ({children}) => {
   const [userInfo, setUserInfo] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [splashLoading, setSplashLoading] = useState(false);
+  const [gameStateC, setGameStateC] = useState({});
+  const [socketC, setSocketC] = useState({});
 
   const register = (username, email, password) => {
     //setIsLoading(true);
@@ -108,6 +110,10 @@ export const AuthProvider = ({children}) => {
         register,
         login,
         logout,
+        gameStateC,
+        setGameStateC,
+        socketC,
+        setSocketC,
       }}>
       {children}
     </AuthContext.Provider>

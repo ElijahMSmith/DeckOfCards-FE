@@ -5,18 +5,12 @@ import { AuthContext } from '../context/AuthContext';
 import io from "socket.io-client";
 
 const LobbyScreen = ({ navigation }) => {
-    const {userInfo, isLoading, logout} = useContext(AuthContext);
+    const {userInfo, isLoading, logout, gameStateC, setGameStateC, socketC, setSocketC} = useContext(AuthContext);
     const [state, setState] = useState({});
     const [joinCode, setJoinCode] = useState("");
-    const [socket, setSocket] = useState({});
+    const [socket, setSocket] = useState(socketC);
     // connect to server
-    useEffect(() => {
-        setSocket(io.connect('https://mobiledeckofcards.azurewebsites.net', {
-        auth : {
-            token: userInfo.token,
-        },
-        }));
-    }, []);
+
     const startGame = () => {
         socket.emit(
             'create',
@@ -33,7 +27,8 @@ const LobbyScreen = ({ navigation }) => {
             (state) => {
                 console.log("From startGame in Lobby")
                 console.log(state);
-                navigation.navigate('Game', {state, socket,});
+                setGameStateC(state);
+                navigation.navigate('Game');
         });
     }
 
