@@ -33,7 +33,7 @@ const HomeScreen = ({navigation}) => {
 
   const createGame = () => {
     socket.emit('create', new Rules(), (state) => {
-      console.log("From createGame in Home")
+      console.log("From createGame in Home");
       console.log(state);
       navigation.navigate('Game', {state, socket,});
     });
