@@ -173,6 +173,18 @@ const genCard = (card, owner) => {
 	)
 };
 
+const genPlayerTitle = (num) => {
+	if (num == playerNum)
+	{
+		return (
+			<Text>Player {num} <Text style={styles.accent}>(You)</Text></Text>
+		)
+	}
+	return (
+		<Text>Player {num}</Text>
+	)
+}
+
 function genTableCards (player, num) {
 
 	// do not render if no cards on table
@@ -187,7 +199,7 @@ function genTableCards (player, num) {
 	// render with same rules as the hand cards if any on table
 	return (
 	<View key={num + 400}>
-		<Text style={styles.title}>Player {num} Table Cards:</Text>
+		<Text style={styles.title}>{genPlayerTitle(num)} Table Cards:</Text>
 		<View style={styles.hand}>{cards}</View>
 	</View>
 	);
@@ -198,7 +210,7 @@ function genHand (player, num) {
 	{
 		return (
 		<View key={num+100}>
-			<Text style={styles.title}>Player {num}:</Text>
+			<Text style={styles.title}>{genPlayerTitle(num)}:</Text>
 			<View style={styles.hand}>
 				<View style={styles.card}>
 					<Text style={styles.emptyPileTitle}>No Cards</Text>
@@ -212,7 +224,7 @@ function genHand (player, num) {
 
 	return (
 		<View key={num+200}>
-			<Text style={styles.title}>Player {num}:</Text>
+			<Text style={styles.title}>{genPlayerTitle(num)}:</Text>
 			<View style={styles.hand}>{cards}</View>
 		</View>
 		)
@@ -279,6 +291,7 @@ const GameScreen = ({navigation}) => {
 	const [source, setSource] = useState("");
 	const [target, setTarget] = useState("");
 	const [lobbyTarget, setLobbyTarget] = useState("");
+	const [showHelp, setShowHelp] = useState(true);
 	
 	var gameCode = route.params.state.code;
 	playerNum = route.params.state.playerNumber;
@@ -696,6 +709,12 @@ const GameScreen = ({navigation}) => {
 	return (
 		<View style={styles.container}>
 			<Text style={styles.title}>Game Code: {route.params.state.code}</Text>
+			<Text style={showHelp ? styles.help : styles.hidden}>Pile codes:</Text>
+			<Text style={showHelp ? styles.help : styles.hidden}><Text style={styles.accent}>Deck:</Text> "Deck", "F"</Text>
+			<Text style={showHelp ? styles.help : styles.hidden}><Text style={styles.accent}>Discard:</Text> "Discard", "Dis", "D"</Text>
+			<Text style={showHelp ? styles.help : styles.hidden}><Text style={styles.accent}>Face Up:</Text> "Face Up", "Face", "P"</Text>
+			<Text style={showHelp ? styles.help : styles.hidden}><Text style={styles.accent}>Your Hand:</Text> "Hand", "H"</Text>
+			<Text style={showHelp ? styles.help : styles.hidden}><Text style={styles.accent}>Player #'s Hand:</Text> "#"</Text>
 			<TextInput
 				style={styles.input}
 				value={source}
@@ -712,18 +731,23 @@ const GameScreen = ({navigation}) => {
 				<TouchableOpacity style={styles.touchable} onPress={() => draw()}>
           <Text style={styles.link}>Draw Card</Text>
         </TouchableOpacity>
+				<Text style={showHelp ? styles.help : styles.hidden}>Move the top card of <Text style={styles.accent}>souce</Text> (pile) to <Text style={styles.accent}>target</Text> (pile/hand)</Text>
 				<TouchableOpacity style={styles.touchable} onPress={() => play()}>
           <Text style={styles.link}>Play Card</Text>
         </TouchableOpacity>
+				<Text style={showHelp ? styles.help : styles.hidden}>Move <Text style={styles.accent}>souce</Text> (card) to <Text style={styles.accent}>target</Text> (pile/hand)</Text>
 				<TouchableOpacity style={styles.touchable} onPress={() => shuffle()}>
           <Text style={styles.link}>Shuffle/Shuffle in</Text>
         </TouchableOpacity>
+				<Text style={showHelp ? styles.help : styles.hidden}>Shuffle <Text style={styles.accent}>souce and target</Text> (piles) into deck (if none specified only shuffle deck)</Text>
 				<TouchableOpacity style={styles.touchable} onPress={() => flip()}>
           <Text style={styles.link}>reveal/hide card</Text>
         </TouchableOpacity>
+				<Text style={showHelp ? styles.help : styles.hidden}>Toggle visibility of <Text style={styles.accent}>souce</Text> (card) to other players</Text>
 				<TouchableOpacity style={isDealer() ? styles.touchable : styles.touchableDisabled} disabled={!isDealer()} onPress={() => deal()}>
           <Text style={styles.link}>Deal Cards</Text>
         </TouchableOpacity>
+				<Text style={showHelp ? styles.help : styles.hidden}>Deal <Text style={styles.accent}>souce</Text> (number) cards to <Text style={styles.accent}>target</Text> (player #, if blank or zero deal to all player)</Text>
 			</View>
 			<View>
 				{genPile(gameState.currentState.deck, "Deck")}
@@ -740,6 +764,9 @@ const GameScreen = ({navigation}) => {
 				/>
 				<TouchableOpacity style={styles.touchable} onPress={() => leaveGame()}>
         	<Text style={styles.link}>Leave Game</Text>
+        </TouchableOpacity>
+				<TouchableOpacity style={styles.touchable} onPress={() => {showHelp ? setShowHelp(false) : setShowHelp(true)}}>
+        	<Text style={styles.link}>Toggle Action Info</Text>
         </TouchableOpacity>
 				<TouchableOpacity style={isHost() ? styles.touchable : styles.touchableDisabled} disabled={!isHost()} onPress={() => kickPlayer()}>
         	<Text style={styles.link}>Kick Player</Text>
@@ -774,7 +801,6 @@ const styles = StyleSheet.create({
 		margin: 2,
 		color: '#000000',
 	},
-
 	touchableDisabled: {
 		backgroundColor: '#888888',
 		padding: 10,
@@ -783,7 +809,16 @@ const styles = StyleSheet.create({
 		margin: 2,
 		color: '#000000',
 	},
-
+	help: {
+		color: '#FFFFFF',
+		fontSize: 20,
+	},
+	hidden: {
+		visibility: 'hidden',
+	},
+	accent: {
+		color: '#ff97ea',
+	},
 	container: {
 		backgroundColor: '#35654d',
 		alignItems: 'center',
