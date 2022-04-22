@@ -4,43 +4,29 @@ import Spinner from 'react-native-loading-spinner-overlay';
 import {AuthContext} from '../context/AuthContext';
 import io from 'socket.io-client';
 
-class Rules {
-  constructor () {
-      this.excludeDealer = false;
-      this.withoutHearts = false;
-      this.withoutDiamonds = false;
-      this.withoutClubs = false;
-      this.withoutSpades = false;
-      this.jokersEnabled = false;
-      this.autoAbsorbCards = false;
-      this.playFacedDown = false;
-  }
-}
-
 const HomeScreen = ({navigation}) => {
-  const {userInfo, isLoading, logout} = useContext(AuthContext);
-  const [state, setState] = useState({});
+  const {userInfo, isLoading, logout, gameStateC, setGameStateC, socketC, setSocketC} = useContext(AuthContext);
   const [joinCode, setJoinCode] = useState("");
-  const [socket, setSocket] = useState({});
   // connect to server
   useEffect(() => {
-    setSocket(io.connect('https://mobiledeckofcards.azurewebsites.net', {
-      auth : {
-        token: userInfo.token,
-      },
-    }));
-  }, []);
+    setSocketC(io.connect('https://mobiledeckofcards.azurewebsites.net', {
+            auth : {
+                token: userInfo.token,
+            },
+        }));
+}, []);
 
   const createGame = () => {
-    navigation.navigate('Lobby', {state, socket,});
+    navigation.navigate('Lobby');
   }
+
   const joinGame = () => {
-    if (socket == null)
+    if (socketC == null)
     {
       console.log("socket is null")
       return "";
     }
-    socket.emit('join', joinCode, (state) => {
+    socketC.emit('join', joinCode, (state) => {
       if ('error' in state)
       {
         console.log(state.error);
@@ -55,8 +41,8 @@ const HomeScreen = ({navigation}) => {
       }
 
       state.code = joinCode;
-
-      navigation.navigate('Game', {state, socket,});
+      setGameStateC(state);
+      navigation.navigate('Game');
     });
   }
   

@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { AuthContext } from '../context/AuthContext';
 
 var playerNum = -1;
 
@@ -283,8 +283,9 @@ function genPile (pile, name) {
 }
 
 const GameScreen = ({navigation}) => {
-	const route = useRoute();
-	const [gameState, setGameState] = useState(route.params.state);
+	const {gameStateC, socketC} = useContext(AuthContext);
+	console.log(socketC);
+	const [gameState, setGameState] = useState(gameStateC);
 	// react is evil and does not detect changes in the properties of an object as a 'real' change
 	// so this jank setup forces the page to reload, I've spent too long looking for a pretty fix.
 	const [, setReload] = useState();
@@ -293,9 +294,9 @@ const GameScreen = ({navigation}) => {
 	const [lobbyTarget, setLobbyTarget] = useState("");
 	const [showHelp, setShowHelp] = useState(true);
 	
-	var gameCode = route.params.state.code;
-	playerNum = route.params.state.playerNumber;
-	const socket = route.params.socket;
+	var gameCode = gameState.code;
+	playerNum = gameState.playerNumber;
+	const socket = socketC;
 	
 	useEffect(() => {
 		socket.on('update', (obj) => {
@@ -708,7 +709,7 @@ const GameScreen = ({navigation}) => {
 
 	return (
 		<View style={styles.container}>
-			<Text style={styles.title}>Game Code: {route.params.state.code}</Text>
+			<Text style={styles.title}>Game Code: {gameState.code}</Text>
 			<Text style={showHelp ? styles.help : styles.hidden}>Pile codes:</Text>
 			<Text style={showHelp ? styles.help : styles.hidden}><Text style={styles.accent}>Deck:</Text> "Deck", "F"</Text>
 			<Text style={showHelp ? styles.help : styles.hidden}><Text style={styles.accent}>Discard:</Text> "Discard", "Dis", "D"</Text>
