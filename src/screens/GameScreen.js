@@ -190,9 +190,7 @@ function genTableCards (player, num) {
 	// do not render if no cards on table
 	if (player.table.contents.length == 0)
 	{
-		return (
-			<View key={num+300} style={styles.hidden}><Text>hidden</Text></View>
-			)
+		return (null);
 	}
 
 	const cards = player.table.contents.map(element => genCard(element, num));
@@ -706,16 +704,78 @@ const GameScreen = ({navigation}) => {
 
 		return hands;
 	}
+	const genHelp = () => {
+		if (!showHelp)
+		{
+			return(null);
+		}
+		return (
+			<View style={styles.helpContainer}>
+				<Text style={styles.help}>Pile codes:</Text>
+				<Text style={styles.help}><Text style={styles.accent}>Deck:</Text> "Deck", "F"</Text>
+				<Text style={styles.help}><Text style={styles.accent}>Discard:</Text> "Discard", "Dis", "D"</Text>
+				<Text style={styles.help}><Text style={styles.accent}>Face Up:</Text> "Face Up", "Face", "P"</Text>
+				<Text style={styles.help}><Text style={styles.accent}>Your Hand:</Text> "Hand", "H"</Text>
+				<Text style={styles.help}><Text style={styles.accent}>Player #'s Hand:</Text> "#"</Text>
+				<Text style={styles.help}><Text style={styles.accent}>Card:</Text> string of form "[Num][Suit]"</Text>
+				<Text style={styles.help}><Text style={styles.accent}>Example:</Text> 10 of spades : 10S, Queen of Diamonds : QD</Text>
+			</View>
+		);
+	}
 
+	const genControls = () => {
+		if (!showHelp)
+		{
+			return (
+				<View>
+					<TouchableOpacity style={styles.touchable} onPress={() => draw()}>
+						<Text style={styles.link}>Draw Card</Text>
+					</TouchableOpacity>
+					<TouchableOpacity style={styles.touchable} onPress={() => play()}>
+						<Text style={styles.link}>Play Card</Text>
+					</TouchableOpacity>
+					<TouchableOpacity style={styles.touchable} onPress={() => shuffle()}>
+						<Text style={styles.link}>Shuffle/Shuffle in</Text>
+					</TouchableOpacity>
+					<TouchableOpacity style={styles.touchable} onPress={() => flip()}>
+						<Text style={styles.link}>reveal/hide card</Text>
+					</TouchableOpacity>
+					<TouchableOpacity style={isDealer() ? styles.touchable : styles.touchableDisabled} disabled={!isDealer()} onPress={() => deal()}>
+						<Text style={styles.link}>Deal Cards</Text>
+					</TouchableOpacity>
+				</View>
+			)
+		}
+		
+		return (
+			<View>
+				<TouchableOpacity style={styles.touchable} onPress={() => draw()}>
+					<Text style={styles.link}>Draw Card</Text>
+				</TouchableOpacity>
+				<Text style={styles.help}>Move the top card of <Text style={styles.accent}>souce</Text> (pile) to <Text style={styles.accent}>target</Text> (pile/hand)</Text>
+				<TouchableOpacity style={styles.touchable} onPress={() => play()}>
+					<Text style={styles.link}>Play Card</Text>
+				</TouchableOpacity>
+				<Text style={styles.help}>Move <Text style={styles.accent}>souce</Text> (card) to <Text style={styles.accent}>target</Text> (pile/hand)</Text>
+				<TouchableOpacity style={styles.touchable} onPress={() => shuffle()}>
+					<Text style={styles.link}>Shuffle/Shuffle in</Text>
+				</TouchableOpacity>
+				<Text style={styles.help}>Shuffle <Text style={styles.accent}>souce and target</Text> (piles) into deck (if none specified only shuffle deck)</Text>
+				<TouchableOpacity style={styles.touchable} onPress={() => flip()}>
+					<Text style={styles.link}>reveal/hide card</Text>
+				</TouchableOpacity>
+				<Text style={styles.help}>Toggle visibility of <Text style={styles.accent}>souce</Text> (card) to other players</Text>
+				<TouchableOpacity style={isDealer() ? styles.touchable : styles.touchableDisabled} disabled={!isDealer()} onPress={() => deal()}>
+					<Text style={styles.link}>Deal Cards</Text>
+				</TouchableOpacity>
+				<Text style={styles.help}>Deal <Text style={styles.accent}>souce</Text> (number) cards to <Text style={styles.accent}>target</Text> (player #, if blank or zero deal to all player)</Text>
+			</View>
+		)
+	}
 	return (
 		<View style={styles.container}>
 			<Text style={styles.title}>Game Code: {gameState.code}</Text>
-			<Text style={showHelp ? styles.help : styles.hidden}>Pile codes:</Text>
-			<Text style={showHelp ? styles.help : styles.hidden}><Text style={styles.accent}>Deck:</Text> "Deck", "F"</Text>
-			<Text style={showHelp ? styles.help : styles.hidden}><Text style={styles.accent}>Discard:</Text> "Discard", "Dis", "D"</Text>
-			<Text style={showHelp ? styles.help : styles.hidden}><Text style={styles.accent}>Face Up:</Text> "Face Up", "Face", "P"</Text>
-			<Text style={showHelp ? styles.help : styles.hidden}><Text style={styles.accent}>Your Hand:</Text> "Hand", "H"</Text>
-			<Text style={showHelp ? styles.help : styles.hidden}><Text style={styles.accent}>Player #'s Hand:</Text> "#"</Text>
+			{genHelp()}
 			<TextInput
 				style={styles.input}
 				value={source}
@@ -728,28 +788,7 @@ const GameScreen = ({navigation}) => {
 				placeholder="Target"
 				onChangeText={text => setTarget(text)}
 			/>
-			<View>
-				<TouchableOpacity style={styles.touchable} onPress={() => draw()}>
-          <Text style={styles.link}>Draw Card</Text>
-        </TouchableOpacity>
-				<Text style={showHelp ? styles.help : styles.hidden}>Move the top card of <Text style={styles.accent}>souce</Text> (pile) to <Text style={styles.accent}>target</Text> (pile/hand)</Text>
-				<TouchableOpacity style={styles.touchable} onPress={() => play()}>
-          <Text style={styles.link}>Play Card</Text>
-        </TouchableOpacity>
-				<Text style={showHelp ? styles.help : styles.hidden}>Move <Text style={styles.accent}>souce</Text> (card) to <Text style={styles.accent}>target</Text> (pile/hand)</Text>
-				<TouchableOpacity style={styles.touchable} onPress={() => shuffle()}>
-          <Text style={styles.link}>Shuffle/Shuffle in</Text>
-        </TouchableOpacity>
-				<Text style={showHelp ? styles.help : styles.hidden}>Shuffle <Text style={styles.accent}>souce and target</Text> (piles) into deck (if none specified only shuffle deck)</Text>
-				<TouchableOpacity style={styles.touchable} onPress={() => flip()}>
-          <Text style={styles.link}>reveal/hide card</Text>
-        </TouchableOpacity>
-				<Text style={showHelp ? styles.help : styles.hidden}>Toggle visibility of <Text style={styles.accent}>souce</Text> (card) to other players</Text>
-				<TouchableOpacity style={isDealer() ? styles.touchable : styles.touchableDisabled} disabled={!isDealer()} onPress={() => deal()}>
-          <Text style={styles.link}>Deal Cards</Text>
-        </TouchableOpacity>
-				<Text style={showHelp ? styles.help : styles.hidden}>Deal <Text style={styles.accent}>souce</Text> (number) cards to <Text style={styles.accent}>target</Text> (player #, if blank or zero deal to all player)</Text>
-			</View>
+			{genControls()}
 			<View>
 				{genPile(gameState.currentState.deck, "Deck")}
 				{genPile(gameState.currentState.discard, "Discard")}
@@ -814,8 +853,8 @@ const styles = StyleSheet.create({
 		color: '#FFFFFF',
 		fontSize: 20,
 	},
-	hidden: {
-		display: 'none',
+	helpContainer: {
+		alignItems: 'center',
 	},
 	accent: {
 		color: '#ff97ea',
@@ -840,7 +879,6 @@ const styles = StyleSheet.create({
 		flexWrap: "wrap",
 		flex: 1,
 		flexShrink: 1,
-
 	},
 	card: {
 		backgroundColor: '#FFFFFF',
