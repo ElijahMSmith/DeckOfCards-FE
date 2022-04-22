@@ -32,7 +32,15 @@ const HomeScreen = ({navigation}) => {
   }, []);
 
   const createGame = () => {
+<<<<<<< HEAD
     navigation.navigate('Lobby', {state, socket,});
+=======
+    socket.emit('create', new Rules(), (state) => {
+      console.log("From createGame in Home");
+      console.log(state);
+      navigation.navigate('Game', {state, socket,});
+    });
+>>>>>>> d080612ae0db9e83953cef2570a5c417f40a22c8
   }
   const joinGame = () => {
     if (socket == null)
