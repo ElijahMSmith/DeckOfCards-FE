@@ -179,14 +179,14 @@ function genTableCards (player, num) {
 	if (player.table.contents.length == 0)
 	{
 		return (
-			<View key={player + num} style={{visibility: 'hidden'}}><Text>hidden</Text></View>
+			<View key={num+300} style={{visibility: 'hidden'}}><Text>hidden</Text></View>
 			)
 	}
 
 	const cards = player.table.contents.map(element => genCard(element, num));
 	// render with same rules as the hand cards if any on table
 	return (
-	<View key={'table' + player}>
+	<View key={num + 400}>
 		<Text style={styles.title}>Player {num} Table Cards:</Text>
 		<View style={styles.hand}>{cards}</View>
 	</View>
@@ -197,7 +197,7 @@ function genHand (player, num) {
 	if (player.hand.contents.length == 0)
 	{
 		return (
-		<View key={player}>
+		<View key={num+100}>
 			<Text style={styles.title}>Player {num}:</Text>
 			<View style={styles.hand}>
 				<View style={styles.card}>
@@ -211,7 +211,7 @@ function genHand (player, num) {
 	const cards = player.hand.contents.map(element => genCard(element, num));
 
 	return (
-		<View key={player}>
+		<View key={num+200}>
 			<Text style={styles.title}>Player {num}:</Text>
 			<View style={styles.hand}>{cards}</View>
 		</View>
@@ -286,12 +286,16 @@ const GameScreen = ({navigation}) => {
 	
 	useEffect(() => {
 		socket.on('update', (obj) => {
-			
 			var tmp = gameState;
 			tmp.currentState = Object.assign(gameState.currentState, obj);
 			setGameState(tmp);
-			console.log(gameState)
-			setReload({})
+			console.log(gameState);
+			setReload({});
+		});
+
+		socket.on('kicked', () => {
+			console.log("kicked");
+			navigation.navigate('Home');
 		});
 	}, []);
 
@@ -714,7 +718,10 @@ const GameScreen = ({navigation}) => {
 				<TouchableOpacity style={styles.touchable} onPress={() => shuffle()}>
           <Text style={styles.link}>Shuffle/Shuffle in</Text>
         </TouchableOpacity>
-				<TouchableOpacity style={styles.touchable} disabled={!isDealer()} onPress={() => deal()}>
+				<TouchableOpacity style={styles.touchable} onPress={() => flip()}>
+          <Text style={styles.link}>reveal/hide card</Text>
+        </TouchableOpacity>
+				<TouchableOpacity style={isDealer() ? styles.touchable : styles.touchableDisabled} disabled={!isDealer()} onPress={() => deal()}>
           <Text style={styles.link}>Deal Cards</Text>
         </TouchableOpacity>
 			</View>
@@ -734,19 +741,19 @@ const GameScreen = ({navigation}) => {
 				<TouchableOpacity style={styles.touchable} onPress={() => leaveGame()}>
         	<Text style={styles.link}>Leave Game</Text>
         </TouchableOpacity>
-				<TouchableOpacity style={styles.touchable} disabled={!isHost()} onPress={() => kickPlayer()}>
+				<TouchableOpacity style={isHost() ? styles.touchable : styles.touchableDisabled} disabled={!isHost()} onPress={() => kickPlayer()}>
         	<Text style={styles.link}>Kick Player</Text>
         </TouchableOpacity>
-				<TouchableOpacity style={styles.touchable} disabled={!isHost()} onPress={() => absorbHand()}>
+				<TouchableOpacity style={isHost() ? styles.touchable : styles.touchableDisabled} disabled={!isHost()} onPress={() => absorbHand()}>
         	<Text style={styles.link}>Absorb Hand</Text>
         </TouchableOpacity>
-				<TouchableOpacity style={styles.touchable} disabled={!(isHost() || isDealer())} onPress={() => assignDealer()}>
+				<TouchableOpacity style={(isHost() || isDealer()) ? styles.touchable : styles.touchableDisabled} disabled={!(isHost() || isDealer())} onPress={() => assignDealer()}>
         	<Text style={styles.link}>Set Dealer</Text>
         </TouchableOpacity>
-				<TouchableOpacity style={styles.touchable} disabled={!isHost()} onPress={() => resetGame()}>
+				<TouchableOpacity style={isHost() ? styles.touchable : styles.touchableDisabled} disabled={!isHost()} onPress={() => resetGame()}>
         	<Text style={styles.link}>Reset Game</Text>
         </TouchableOpacity>
-				<TouchableOpacity style={styles.touchable} disabled={!isHost()} onPress={() => endGame()}>
+				<TouchableOpacity style={isHost() ? styles.touchable : styles.touchableDisabled} disabled={!isHost()} onPress={() => endGame()}>
         	<Text style={styles.link}>End Game</Text>
         </TouchableOpacity>
 			</View>
@@ -767,6 +774,16 @@ const styles = StyleSheet.create({
 		margin: 2,
 		color: '#000000',
 	},
+
+	touchableDisabled: {
+		backgroundColor: '#888888',
+		padding: 10,
+		borderWidth: 2,
+		borderRadius: 25,
+		margin: 2,
+		color: '#000000',
+	},
+
 	container: {
 		backgroundColor: '#35654d',
 		alignItems: 'center',
