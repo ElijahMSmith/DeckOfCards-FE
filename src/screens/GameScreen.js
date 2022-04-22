@@ -1,7 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput } from 'react-native';
-import { Button } from 'react-native-web';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
 var playerNum = -1;
@@ -302,20 +301,9 @@ const GameScreen = ({navigation}) => {
 			<View style={styles.container}>
 				<Text>Couldn't Connect to server</Text>
 				<View>
-					<Button
-							title="Reload"
-							color="red"
-							onPress={() => {
-								setReload({});
-							}}
-					/>
-					<Button
-							title="Return to Home"
-							color="blue"
-							onPress={() => {
-								navigation.navigate('Home');
-							}}
-					/>
+					<TouchableOpacity style={styles.touchable} onPress={() => navigation.navigate('Home')}>
+						<Text style={styles.link}>Leave Game</Text>
+					</TouchableOpacity>
 				</View>
 			</View>
 		)
@@ -717,41 +705,18 @@ const GameScreen = ({navigation}) => {
 				onChangeText={text => setTarget(text)}
 			/>
 			<View>
-				<Button
-						title="Draw Card"
-						color="red"
-						onPress={() => {
-							draw();
-						}}
-				/>
-				<Button
-						title="Play Card"
-						color="blue"
-						onPress={() => {
-							play();
-						}}
-				/>
-				<Button
-						title="Flip Card"
-						color="purple"
-						onPress={() => {
-							flip();
-						}}
-				/>
-				<Button
-						title="Shuffle/Shuffle in"
-						color="gray"
-						onPress={() => {
-							shuffle();
-						}}
-				/>
-				<Button disabled={!isDealer()}
-						title="Deal Cards"
-						color="green"
-						onPress={() => {
-							deal();
-						}}
-				/>
+				<TouchableOpacity style={styles.touchable} onPress={() => draw()}>
+          <Text style={styles.link}>Draw Card</Text>
+        </TouchableOpacity>
+				<TouchableOpacity style={styles.touchable} onPress={() => play()}>
+          <Text style={styles.link}>Play Card</Text>
+        </TouchableOpacity>
+				<TouchableOpacity style={styles.touchable} onPress={() => shuffle()}>
+          <Text style={styles.link}>Shuffle/Shuffle in</Text>
+        </TouchableOpacity>
+				<TouchableOpacity style={styles.touchable} disabled={!isDealer()} onPress={() => deal()}>
+          <Text style={styles.link}>Deal Cards</Text>
+        </TouchableOpacity>
 			</View>
 			<View>
 				{genPile(gameState.currentState.deck, "Deck")}
@@ -766,48 +731,24 @@ const GameScreen = ({navigation}) => {
 					placeholder="user #"
 					onChangeText={text => setLobbyTarget(text)}
 				/>
-				<Button
-						title="Leave Game"
-						color="red"
-						onPress={() => {
-							leaveGame();
-						}}
-				/>
-				<Button disabled={!isHost()}
-						title="Kick Player"
-						color="blue"
-						onPress={() => {
-							kickPlayer();
-						}}
-				/>
-				<Button disabled={!isHost()}
-						title="Absorb Hand"
-						color="purple"
-						onPress={() => {
-							absorbHand();
-						}}
-				/>
-				<Button disabled={!(isHost() || isDealer())}
-						title="Set Dealer"
-						color="black"
-						onPress={() => {
-							assignDealer();
-						}}
-				/>
-				<Button disabled={!isHost()}
-						title="Reset Game"
-						color="grey"
-						onPress={() => {
-							resetGame();
-						}}
-				/>
-				<Button disabled={!isHost()}
-						title="End Game"
-						color="green"
-						onPress={() => {
-							endGame();
-						}}
-				/>
+				<TouchableOpacity style={styles.touchable} onPress={() => leaveGame()}>
+        	<Text style={styles.link}>Leave Game</Text>
+        </TouchableOpacity>
+				<TouchableOpacity style={styles.touchable} disabled={!isHost()} onPress={() => kickPlayer()}>
+        	<Text style={styles.link}>Kick Player</Text>
+        </TouchableOpacity>
+				<TouchableOpacity style={styles.touchable} disabled={!isHost()} onPress={() => absorbHand()}>
+        	<Text style={styles.link}>Absorb Hand</Text>
+        </TouchableOpacity>
+				<TouchableOpacity style={styles.touchable} disabled={!(isHost() || isDealer())} onPress={() => assignDealer()}>
+        	<Text style={styles.link}>Set Dealer</Text>
+        </TouchableOpacity>
+				<TouchableOpacity style={styles.touchable} disabled={!isHost()} onPress={() => resetGame()}>
+        	<Text style={styles.link}>Reset Game</Text>
+        </TouchableOpacity>
+				<TouchableOpacity style={styles.touchable} disabled={!isHost()} onPress={() => endGame()}>
+        	<Text style={styles.link}>End Game</Text>
+        </TouchableOpacity>
 			</View>
 
 			<StatusBar style="auto" />
@@ -818,6 +759,14 @@ const GameScreen = ({navigation}) => {
 export default GameScreen;
 
 const styles = StyleSheet.create({
+	touchable: {
+		backgroundColor: '#FFFFFF',
+		padding: 10,
+		borderWidth: 2,
+		borderRadius: 25,
+		margin: 2,
+		color: '#000000',
+	},
 	container: {
 		backgroundColor: '#35654d',
 		alignItems: 'center',
