@@ -191,7 +191,7 @@ function genTableCards (player, num) {
 	if (player.table.contents.length == 0)
 	{
 		return (
-			<View key={num+300} style={{visibility: 'hidden'}}><Text>hidden</Text></View>
+			<View key={num+300} style={styles.hidden}><Text>hidden</Text></View>
 			)
 	}
 
@@ -815,7 +815,7 @@ const styles = StyleSheet.create({
 		fontSize: 20,
 	},
 	hidden: {
-		visibility: 'hidden',
+		display: 'none',
 	},
 	accent: {
 		color: '#ff97ea',
