@@ -35,7 +35,7 @@ const HomeScreen = ({navigation}) => {
     socket.emit('create', new Rules(), (state) => {
       console.log("From createGame in Home")
       console.log(state);
-      navigation.navigate('Game', {state, socket});
+      navigation.navigate('Game', {state, socket,});
     });
   }
   const joinGame = () => {
@@ -60,7 +60,7 @@ const HomeScreen = ({navigation}) => {
 
       state.code = joinCode;
 
-      navigation.navigate('Game', {state, socket});
+      navigation.navigate('Game', {state, socket,});
     });
   }
   
