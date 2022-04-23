@@ -12,7 +12,7 @@ import {
 import Spinner from "react-native-loading-spinner-overlay";
 import { AuthContext } from "../context/AuthContext";
 import io from "socket.io-client";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const LobbyScreen = ({ navigation }) => {
 	const {
@@ -51,39 +51,37 @@ const LobbyScreen = ({ navigation }) => {
 		);
 	};
 
-    const savePreset = async (value) => {
-        try {
-          const jsonValue = JSON.stringify(value)
-          await AsyncStorage.setItem(presetName, jsonValue)
-          console.log("HUZZAH")
-        } catch (e) {
-            // saving error
-            console.log(e)
-        }
-    };
+	const savePreset = async (value) => {
+		try {
+			const jsonValue = JSON.stringify(value);
+			await AsyncStorage.setItem(presetName, jsonValue);
+			console.log("HUZZAH");
+		} catch (e) {
+			// saving error
+			console.log(e);
+		}
+	};
 
-    const findPreset = async () => {
-        try {
-            if (presetName == "")
-                return
-            const jsonValue = await AsyncStorage.getItem(presetName)
-            if (jsonValue != null)
-            {
-                console.log(jsonValue)
-                setDealer(jsonValue.excludeDealer)
-                setHearts(jsonValue.withoutHearts)
-                setDiamonds(jsonValue.withoutDiamonds)
-                setClubs(jsonValue.withoutClubs)
-                setSpades(jsonValue.withoutSpades)
-                setJokers(jsonValue.jokersEnabled)
-                setAbsorb(jsonValue.autoAbsorbCards)
-                setFaceDown(jsonValue.playFacedDown)
-            }
-        } catch(e) {
-            // error reading value
-            console.log(e)
-        }
-    };
+	const findPreset = async () => {
+		try {
+			if (presetName == "") return;
+			const jsonValue = await AsyncStorage.getItem(presetName);
+			const preset = JSON.parse(jsonValue);
+			if (jsonValue != null) {
+				setDealer(preset.excludeDealer);
+				setHearts(preset.withoutHearts);
+				setDiamonds(preset.withoutDiamonds);
+				setClubs(preset.withoutClubs);
+				setSpades(preset.withoutSpades);
+				setJokers(preset.jokersEnabled);
+				setAbsorb(preset.autoAbsorbCards);
+				setFaceDown(preset.playFacedDown);
+			}
+		} catch (e) {
+			// error reading value
+			console.log(e);
+		}
+	};
 
 	const [isDealer, setDealer] = useState(false);
 	const toggleDealer = () => setDealer((previousState) => !previousState);
@@ -202,33 +200,36 @@ const LobbyScreen = ({ navigation }) => {
 				value={presetName}
 				placeholder="Rule Preset Name"
 				onChangeText={(text) => setName(text)}
-				secureTextEntry
 			/>
 
-            <TextInput
-                style={styles.input}
-                value={presetName}
-                placeholder="Rule Preset Name"
-                onChangeText={text => setName(text)}
-            />
-
-            <View style={{ flexDirection: 'row', marginTop: 20, justifyContent: 'center' }}>
-                <Pressable style={styles.smallButton} onPress={() => savePreset({
-                    excludeDealer: isDealer,
-                    withoutHearts: isHearts,
-                    withoutDiamonds: isDiamonds,
-                    withoutClubs: isClubs,
-                    withoutSpades: isSpades,
-                    jokersEnabled: isJokers,
-                    autoAbsorbCards: isAbsorb,
-                    playFacedDown: isFaceDown
-                })}>
-                    <Text style= {styles.smallButtonText}>Save Preset</Text>
-                </Pressable>
-                <Pressable style={styles.smallButton} onPress={findPreset}>
-                    <Text style= {styles.smallButtonText}>Get Preset</Text>
-                </Pressable>
-            </View>
+			<View
+				style={{
+					flexDirection: "row",
+					marginTop: 20,
+					justifyContent: "center",
+				}}
+			>
+				<Pressable
+					style={styles.smallButton}
+					onPress={() =>
+						savePreset({
+							excludeDealer: isDealer,
+							withoutHearts: isHearts,
+							withoutDiamonds: isDiamonds,
+							withoutClubs: isClubs,
+							withoutSpades: isSpades,
+							jokersEnabled: isJokers,
+							autoAbsorbCards: isAbsorb,
+							playFacedDown: isFaceDown,
+						})
+					}
+				>
+					<Text style={styles.smallButtonText}>Save Preset</Text>
+				</Pressable>
+				<Pressable style={styles.smallButton} onPress={findPreset}>
+					<Text style={styles.smallButtonText}>Get Preset</Text>
+				</Pressable>
+			</View>
 
 			<View
 				style={{
