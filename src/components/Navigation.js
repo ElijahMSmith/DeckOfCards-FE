@@ -42,6 +42,16 @@ const Navigation = () => {
             component={LobbyScreen}
             options={{headerShown: false}}
             />
+			<Stack.Screen
+            name="Replay"
+            component={ReplayScreen}
+            options={{headerShown: false}}
+            />
+            <Stack.Screen
+            name="Library" 
+            component={LibraryScreen} 
+            options={{headerShown: false}}
+            />
           </>
         ) : (
           <>
