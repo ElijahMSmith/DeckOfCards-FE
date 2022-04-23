@@ -64,6 +64,9 @@ const HomeScreen = ({ navigation }) => {
 		});
 	};
 
+	const ReplayLibrary = () => {
+		navigation.navigate('Library')
+	  }
 	return (
 		<View style={styles.container}>
 			<Text style={styles.welcome}>
@@ -83,7 +86,7 @@ const HomeScreen = ({ navigation }) => {
 				placeholder="Game Code"
 				onChangeText={(text) => setJoinCode(text)}
 			/>
-			<Pressable style={styles.button}>
+			<Pressable style={styles.button} onPress={ReplayLibrary}>
 				<Text style={styles.buttonText}>View Replays</Text>
 			</Pressable>
 
