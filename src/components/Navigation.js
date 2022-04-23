@@ -10,6 +10,8 @@ import {AuthContext} from '../context/AuthContext';
 import SplashScreen from '../screens/SplashScreen';
 import GameScreen from '../screens/GameScreen';
 import LobbyScreen from '../screens/LobbyScreen';
+import ReplayScreen from '../screens/ReplayScreen'
+import LibraryScreen from '../screens/LibraryScreen'
 
 const Stack = createNativeStackNavigator();
 
@@ -40,6 +42,16 @@ const Navigation = () => {
             <Stack.Screen
             name="Lobby"
             component={LobbyScreen}
+            options={{headerShown: false}}
+            />
+			<Stack.Screen
+            name="Replay"
+            component={ReplayScreen}
+            options={{headerShown: false}}
+            />
+            <Stack.Screen
+            name="Library" 
+            component={LibraryScreen} 
             options={{headerShown: false}}
             />
           </>
