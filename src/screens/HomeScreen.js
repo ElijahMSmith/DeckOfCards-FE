@@ -23,7 +23,7 @@ const HomeScreen = ({ navigation }) => {
 		setSocketC,
 	} = useContext(AuthContext);
 	const [joinCode, setJoinCode] = useState("");
-	// connect to server
+
 	const PROD = "https://mobiledeckofcards.azurewebsites.net";
 	const LOCAL = "http://localhost:8080";
 	// connect to server
