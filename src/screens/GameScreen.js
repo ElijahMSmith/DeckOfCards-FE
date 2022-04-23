@@ -152,7 +152,7 @@ const genCard = (card, owner) => {
 	else
 	{
 		suit = 'J';
-		num = 'Jkr';
+		num = card.value;
 	}
 	
 

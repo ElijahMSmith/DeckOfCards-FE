@@ -3,7 +3,7 @@ import { Text, TextInput, TouchableOpacity, View, StyleSheet, Switch, Pressable,
 import Spinner from 'react-native-loading-spinner-overlay';
 import { AuthContext } from '../context/AuthContext';
 import io from "socket.io-client";
-import Dropdown from 'react-bootstrap/Dropdown';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LobbyScreen = ({ navigation }) => {
     const {userInfo, isLoading, logout, gameStateC, setGameStateC, socketC, setSocketC} = useContext(AuthContext);
@@ -33,41 +33,79 @@ const LobbyScreen = ({ navigation }) => {
         });
     }
 
-    const savePreset = () => {
-        
-    }
+    const savePreset = async (value) => {
+        try {
+          const jsonValue = JSON.stringify(value)
+          await AsyncStorage.setItem(presetName, jsonValue)
+          console.log("HUZZAH")
+        } catch (e) {
+            // saving error
+            console.log(e)
+        }
+    };
+
+    const findPreset = async () => {
+        try {
+            if (presetName == "")
+                return
+            const jsonValue = await AsyncStorage.getItem(presetName)
+            if (jsonValue != null)
+            {
+                console.log(jsonValue)
+                setDealer(jsonValue.excludeDealer)
+                setHearts(jsonValue.withoutHearts)
+                setDiamonds(jsonValue.withoutDiamonds)
+                setClubs(jsonValue.withoutClubs)
+                setSpades(jsonValue.withoutSpades)
+                setJokers(jsonValue.jokersEnabled)
+                setAbsorb(jsonValue.autoAbsorbCards)
+                setFaceDown(jsonValue.playFacedDown)
+            }
+        } catch(e) {
+            // error reading value
+            console.log(e)
+        }
+    };
 
     
 
     const [isDealer, setDealer] = useState(false);
     const toggleDealer = () => setDealer(previousState => !previousState);
-
+    console.log(isDealer)
+    
     const [isAbsorb, setAbsorb] = useState(false);
     const toggleAbsorb = () => setAbsorb(previousState => !previousState);
+    console.log(isAbsorb)
 
     const [isFaceDown, setFaceDown] = useState(false);
     const toggleFaceDown = () => setFaceDown(previousState => !previousState);
+    console.log(isFaceDown)
 
     const [isJokers, setJokers] = useState(false);
     const toggleJokers = () => setJokers(previousState => !previousState);
+    console.log(isJokers)
 
     const [isHearts, setHearts] = useState(false);
     const toggleHearts = () => setHearts(previousState => !previousState);
+    console.log(isHearts)
 
     const [isDiamonds, setDiamonds] = useState(false);
     const toggleDiamonds = () => setDiamonds(previousState => !previousState);
+    console.log(isDiamonds)
 
     const [isSpades, setSpades] = useState(false);
     const toggleSpades = () => setSpades(previousState => !previousState);
+    console.log(isSpades)
 
     const [isClubs, setClubs] = useState(false);
     const toggleClubs = () => setClubs(previousState => !previousState);
+    console.log(isClubs)
 
     return (
         <View style={styles.container}>
 
             <Text style={styles.welcome}>Creating a new Game (You'll be the host!)</Text>
-            <Text style={styles.question}>Will there be a dealer for the game?</Text>
+            <Text style={styles.question}>Will dealer not deal to themselves?</Text>
             <Switch
                 trackColor={{ false: "#767577", true: "#81b0ff" }}
                 thumbColor={isDealer ? "red" : "black"}
@@ -136,24 +174,25 @@ const LobbyScreen = ({ navigation }) => {
                 value={presetName}
                 placeholder="Rule Preset Name"
                 onChangeText={text => setName(text)}
-                secureTextEntry
             />
 
-            <Pressable style={styles.smallButton} onPress={savePreset}>
-               <Text style= {styles.smallButtonText}>Save Preset</Text>
-            </Pressable>
-
-            <Dropdown>
-                <Dropdown.Toggle variant="success" id="dropdown-basic">
-                    Saved Presets
-                </Dropdown.Toggle>
-
-                <Dropdown.Menu>
-                    <Dropdown.Item href="#/action-1">Action</Dropdown.Item>
-                    <Dropdown.Item href="#/action-2">Another action</Dropdown.Item>
-                    <Dropdown.Item href="#/action-3">Something else</Dropdown.Item>
-                </Dropdown.Menu>
-            </Dropdown>
+            <View style={{ flexDirection: 'row', marginTop: 20, justifyContent: 'center' }}>
+                <Pressable style={styles.smallButton} onPress={() => savePreset({
+                    excludeDealer: isDealer,
+                    withoutHearts: isHearts,
+                    withoutDiamonds: isDiamonds,
+                    withoutClubs: isClubs,
+                    withoutSpades: isSpades,
+                    jokersEnabled: isJokers,
+                    autoAbsorbCards: isAbsorb,
+                    playFacedDown: isFaceDown
+                })}>
+                    <Text style= {styles.smallButtonText}>Save Preset</Text>
+                </Pressable>
+                <Pressable style={styles.smallButton} onPress={findPreset}>
+                    <Text style= {styles.smallButtonText}>Get Preset</Text>
+                </Pressable>
+            </View>
 
             <Pressable style={styles.button} onPress={startGame}>
                <Text style= {styles.buttonText}>Start the Game!</Text>
