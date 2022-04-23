@@ -12,6 +12,7 @@ import {
 import Spinner from "react-native-loading-spinner-overlay";
 import { AuthContext } from "../context/AuthContext";
 import io from "socket.io-client";
+import Dropdown from "react-bootstrap/Dropdown";
 
 const LobbyScreen = ({ navigation }) => {
 	const {
@@ -26,7 +27,7 @@ const LobbyScreen = ({ navigation }) => {
 	const [state, setState] = useState({});
 	const [joinCode, setJoinCode] = useState("");
 	const [socket, setSocket] = useState(socketC);
-	// connect to server
+	const [presetName, setName] = useState("");
 
 	const startGame = () => {
 		socket.emit(
@@ -49,6 +50,8 @@ const LobbyScreen = ({ navigation }) => {
 			}
 		);
 	};
+
+	const savePreset = () => {};
 
 	const [isDealer, setDealer] = useState(false);
 	const toggleDealer = () => setDealer((previousState) => !previousState);
@@ -162,6 +165,38 @@ const LobbyScreen = ({ navigation }) => {
 				<Text style={styles.buttonText}>Start the Game!</Text>
 			</Pressable>
 
+			<TextInput
+				style={styles.input}
+				value={presetName}
+				placeholder="Rule Preset Name"
+				onChangeText={(text) => setName(text)}
+				secureTextEntry
+			/>
+
+			<Pressable style={styles.smallButton} onPress={savePreset}>
+				<Text style={styles.smallButtonText}>Save Preset</Text>
+			</Pressable>
+
+			<Dropdown>
+				<Dropdown.Toggle variant="success" id="dropdown-basic">
+					Saved Presets
+				</Dropdown.Toggle>
+
+				<Dropdown.Menu>
+					<Dropdown.Item href="#/action-1">Action</Dropdown.Item>
+					<Dropdown.Item href="#/action-2">
+						Another action
+					</Dropdown.Item>
+					<Dropdown.Item href="#/action-3">
+						Something else
+					</Dropdown.Item>
+				</Dropdown.Menu>
+			</Dropdown>
+
+			<Pressable style={styles.button} onPress={startGame}>
+				<Text style={styles.buttonText}>Start the Game!</Text>
+			</Pressable>
+
 			<View
 				style={{
 					flexDirection: "row",
@@ -195,27 +230,50 @@ const styles = StyleSheet.create({
 		marginBottom: 4,
 		color: "white",
 		textAlign: "center",
-		paddingLeft: "15px",
-		paddingRight: "15px",
+		paddingHorizontal: 15,
 	},
 	button: {
 		backgroundColor: "red",
 		width: "50%",
 		padding: 15,
-		marginTop: 10,
 		borderRadius: 10,
 		alignItems: "center",
 		marginBottom: 20,
 		borderRadius: 10,
 		padding: 15,
+		marginVertical: 5,
 	},
 	buttonText: {
 		color: "black",
 		fontWeight: "700",
 		fontSize: 16,
 	},
+	smallButton: {
+		backgroundColor: "red",
+		width: "25%",
+		padding: 15,
+		borderRadius: 10,
+		alignItems: "center",
+		marginBottom: 20,
+		borderRadius: 10,
+		padding: 15,
+		marginVertical: 5,
+	},
+	smallButtonText: {
+		color: "black",
+		fontWeight: "700",
+		fontSize: 14,
+	},
 	link: {
 		color: "red",
+	},
+	input: {
+		marginBottom: 12,
+		borderWidth: 1,
+		borderColor: "black",
+		borderRadius: 5,
+		paddingHorizontal: 14,
+		backgroundColor: "white",
 	},
 });
 
